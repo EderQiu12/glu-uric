@@ -1,72 +1,2574 @@
 <!DOCTYPE html>
-/* 血糖 · 尿酸 记录本 Service Worker */
-const CACHE = 'glu-uric-v4';
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon.svg'
-];
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<meta name="description" content="记录血糖和尿酸，支持图片备注、历史与趋势，数据保存在本机">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="血糖记录">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>血糖 · 尿酸 记录本</title>
+<style>
+:root{
+  --bg:#eef2f7; --card:#fff; --txt:#182230; --muted:#78859a; --line:#e3e9f1;
+  --pri:#2563eb; --pri-soft:#e8f0ff;
+  --ok:#0f8a5f; --warn:#ea580c; --bad:#dc2626; --severe:#9f1239; --low:#2563eb;
+  --radius:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;font-size:17px;line-height:1.5;color:var(--txt);background:var(--bg);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+  padding:0 0 calc(88px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:contain;
+}
+.app{max-width:760px;margin:0 auto;padding:0 14px}
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE)
-      .then((cache) => cache.addAll(ASSETS))
-      .catch(() => {})
-  );
-});
+.status-bar{
+  position:fixed;left:0;right:0;top:0;z-index:80;
+  background:#b45309;color:#fff;font-size:14px;text-align:center;
+  padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top));
+}
+.status-bar[hidden]{display:none}
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(
-        keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
-      ))
-      .then(() => self.clients.claim())
-  );
-});
+.update-bar{
+  position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));
+  z-index:90;background:#1f2937;color:#fff;border-radius:14px;
+  padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  font-size:15px;box-shadow:0 10px 30px rgba(10,20,40,.3);
+}
+.update-bar[hidden]{display:none}
+.update-bar button{
+  font:inherit;font-size:14px;font-weight:600;padding:8px 16px;border-radius:9px;
+  border:0;background:#2563eb;color:#fff;cursor:pointer;flex-shrink:0;
+}
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
-});
+/* 分享横幅 */
+.share-banner{
+  position:sticky;top:10px;z-index:55;
+  background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);
+  color:#fff;border-radius:14px;padding:14px 16px;
+  margin-bottom:14px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;
+  box-shadow:0 6px 20px rgba(37,99,235,.28);
+}
+.share-banner[hidden]{display:none}
+.share-banner-info{display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:0}
+.share-banner-icon{font-size:22px;flex-shrink:0}
+.share-banner-title{font-weight:700;font-size:16px;line-height:1.3;word-break:break-all}
+.share-banner-sub{font-size:12px;opacity:.85;margin-top:2px}
+.share-banner-actions{display:flex;gap:8px;flex-shrink:0}
+.share-banner-actions .mini{
+  background:rgba(255,255,255,.18);color:#fff;border-color:transparent;
+  min-height:38px;padding:0 12px;font-size:13px;font-weight:600;
+}
+.share-banner-actions .mini:active{background:rgba(255,255,255,.3)}
 
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
+/* 分享模式下隐藏记录和数据页 */
+body.share-mode .nav-entry,
+body.share-mode .nav-data{display:none}
 
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
+.topbar{padding:20px 4px 12px}
+.topbar h1{margin:0;font-size:21px;letter-spacing:.3px}
+.topbar p{margin:4px 0 0;font-size:13px;color:var(--muted)}
 
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
-          return res;
-        })
-        .catch(() =>
-          caches.match(req)
-            .then((r) => r || caches.match('./index.html'))
-            .then((r) => r || new Response('离线状态，页面尚未缓存', {
-              status: 503,
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-            }))
-        )
-    );
-    return;
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;background:#fff;
+  border-top:1px solid var(--line);box-shadow:0 -2px 14px rgba(20,30,50,.07);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.tabbar button{
+  flex:1;min-height:58px;border:0;background:none;cursor:pointer;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-size:12px;color:#94a1b3;padding:6px 0;
+}
+.tabbar button .ico{font-size:21px;line-height:1}
+.tabbar button.active{color:var(--pri);font-weight:600}
+
+.card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,30,50,.07)}
+.card h2{font-size:17px;margin:0 0 14px;font-weight:700}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.card-head h2{margin:0}
+.trend-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.view{display:none}
+.view.active{display:block;animation:fade .16s ease-out}
+@keyframes fade{from{opacity:.35;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field>span{font-size:14px;color:#5a6675;font-weight:500}
+input,select{
+  font-family:inherit;font-size:17px;min-height:52px;padding:11px 13px;width:100%;
+  border:1.5px solid var(--line);border-radius:12px;background:#fff;color:inherit;
+}
+input::placeholder{color:#a9b3c1}
+input:focus,select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:400px){.grid2{grid-template-columns:1fr}}
+
+.image-field{margin-bottom:12px}
+.image-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.img-add{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:52px;padding:0 18px;border-radius:12px;border:1.5px dashed #c3cddb;
+  background:#f8fafd;color:#435063;font-size:16px;cursor:pointer;
+  position:relative;overflow:hidden;flex:1 1 auto;
+}
+.img-add input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.img-preview{position:relative;width:76px;height:76px;border-radius:12px;overflow:hidden;
+  border:1px solid var(--line);background:#0f1722;flex-shrink:0}
+.img-preview[hidden]{display:none}
+.img-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.img-remove{
+  position:absolute;top:2px;right:2px;width:24px;height:24px;border-radius:50%;
+  border:0;background:rgba(0,0,0,.62);color:#fff;font-size:16px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0;
+}
+
+.btn{
+  font-family:inherit;font-size:17px;font-weight:600;min-height:54px;padding:0 18px;width:100%;
+  border-radius:13px;border:1.5px solid var(--line);background:#fff;color:var(--txt);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:transform .08s;
+}
+.btn:active{transform:scale(.985)}
+.btn:disabled{opacity:.6;cursor:default;transform:none}
+.btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.ghost{background:#f6f9fd}
+.btn.danger{color:var(--bad);border-color:#f6cccc;background:#fff}
+.btn-row{display:grid;gap:10px;margin-top:4px}
+@media(min-width:520px){.btn-row.two{grid-template-columns:1fr 1fr}}
+.file-btn{position:relative;overflow:hidden}
+.file-btn input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.tip{font-size:13px;color:var(--muted);margin:10px 0 0;line-height:1.5}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+@media(min-width:760px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(20,30,50,.07)}
+.stat .k{font-size:13px;color:var(--muted)}
+.stat .v{font-size:21px;font-weight:700;margin-top:2px;line-height:1.25}
+.stat .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:2px}
+.stat .lvl{display:block;margin-top:4px}
+
+.seg{display:flex;background:#eef2f7;border-radius:11px;padding:3px;gap:3px}
+.seg button{font-family:inherit;font-size:15px;border:0;background:none;padding:8px 14px;border-radius:9px;color:#5a6675;cursor:pointer}
+.seg button.active{background:#fff;color:var(--txt);font-weight:600;box-shadow:0 1px 2px rgba(20,30,50,.12)}
+
+.range-select{
+  font-family:inherit;font-size:14px;min-height:40px;padding:6px 10px;width:auto;
+  border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--txt);
+}
+
+.chart-wrap{width:100%;height:230px;position:relative;touch-action:pan-y}
+canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
+
+.chart-tip{
+  position:absolute;z-index:20;pointer-events:none;
+  background:rgba(23,33,48,.96);color:#fff;border-radius:12px;
+  padding:9px 12px;font-size:13px;line-height:1.6;max-width:76vw;
+  box-shadow:0 8px 24px rgba(10,20,40,.28);
+}
+.chart-tip[hidden]{display:none}
+.chart-tip .tip-date{font-size:12px;color:#aab6c6;margin-bottom:4px}
+.chart-tip .tip-row{display:flex;align-items:center;gap:6px;font-size:13px;margin-top:3px;white-space:nowrap}
+.chart-tip .tip-row b{font-size:16px;font-weight:700}
+.chart-tip .tip-row .tu{color:#aab6c6;font-size:11px}
+.chart-tip .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.chart-tip .badge{font-size:11px;padding:1px 6px;margin-left:2px;vertical-align:1px}
+.chart-tip .tip-note{
+  font-size:12px;color:#cbd5e1;margin-top:6px;white-space:normal;
+  line-height:1.45;max-width:230px;word-break:break-word;
+}
+.chart-tip .tip-img-wrap{
+  margin-top:8px;pointer-events:auto;cursor:zoom-in;display:block;
+}
+.chart-tip .tip-img{
+  width:140px;height:105px;object-fit:cover;display:block;
+  border-radius:8px;border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+}
+
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%}
+.legend i.band{background:rgba(15,138,95,.35);border:1px solid rgba(15,138,95,.5)}
+.chart-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;flex-wrap:wrap}
+.gesture-hint{font-size:12px;color:var(--muted);line-height:1.4}
+.ref-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}
+
+.day-title{font-size:14px;color:var(--muted);font-weight:600;margin:16px 0 8px}
+.day-title:first-child{margin-top:0}
+.rec{border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:10px;background:#fff}
+.rec.lv-high{border-color:#fbd0d0;background:#fffafa}
+.rec.lv-severe{border-color:#f8b4b4;background:#fff5f5;border-left-width:5px}
+.rec .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.rec .when{font-weight:600;font-size:16px}
+.tag{display:inline-block;font-size:12px;background:var(--pri-soft);color:#2b5bd7;padding:2px 8px;border-radius:6px;margin-left:6px;vertical-align:1px}
+.rec .vals{display:flex;gap:20px;flex-wrap:wrap;margin-top:2px}
+.rec .v .k{font-size:13px;color:var(--muted)}
+.rec .v b{font-size:21px;font-weight:700}
+.rec .v .u{font-size:12px;color:var(--muted)}
+.rec .note{font-size:14px;color:var(--muted);margin-top:6px}
+.rec .ops{display:flex;gap:8px;flex-shrink:0}
+.mini{font-family:inherit;font-size:14px;padding:0 14px;min-height:40px;border-radius:10px;
+  border:1px solid var(--line);background:#fff;color:#435063;cursor:pointer}
+.mini.danger{color:var(--bad);border-color:#f6cccc}
+.empty{color:#a3adbb;text-align:center;padding:26px 0;margin:0;font-size:15px}
+
+.rec-img-wrap{margin-top:10px}
+.rec-img-wrap[hidden]{display:none}
+.rec-img{width:88px;height:88px;object-fit:cover;border-radius:10px;border:1px solid var(--line);
+  background:#f1f5fa;cursor:zoom-in;display:block}
+
+.img-viewer{
+  position:fixed;inset:0;z-index:120;background:rgba(8,12,20,.95);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;
+  padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));
+}
+.img-viewer[hidden]{display:none}
+.img-viewer img{max-width:100%;max-height:76vh;border-radius:12px;object-fit:contain;background:#111}
+.img-viewer-caption{color:#dbe3ee;font-size:14px;text-align:center;word-break:break-all;max-width:90vw}
+.img-viewer-close{
+  position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;
+  width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.16);
+  color:#fff;font-size:26px;line-height:1;cursor:pointer;padding:0;
+}
+
+/* 分享弹窗 */
+.dialog{
+  position:fixed;inset:0;z-index:140;
+  background:rgba(8,12,20,.65);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+.dialog[hidden]{display:none}
+.dialog-card{
+  background:#fff;border-radius:16px;padding:20px;
+  width:100%;max-width:440px;
+  box-shadow:0 20px 60px rgba(10,20,40,.35);
+}
+.dialog-card h3{margin:0 0 8px;font-size:18px}
+.dialog-tip{font-size:14px;color:#78859a;margin:0 0 14px;line-height:1.5}
+.dialog-card textarea{
+  width:100%;min-height:88px;padding:10px;
+  border:1.5px solid #e3e9f1;border-radius:10px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#435063;
+  resize:vertical;word-break:break-all;line-height:1.4;
+}
+.dialog-actions{display:flex;gap:10px;margin-top:14px}
+.dialog-actions .btn{flex:1;min-height:48px;font-size:16px}
+
+.lv-low{color:var(--low)} .lv-ok{color:var(--ok)} .lv-warn{color:var(--warn)}
+.lv-high{color:var(--bad)} .lv-severe{color:var(--severe)}
+
+.badge{display:inline-block;font-size:12px;font-weight:600;line-height:1.3;
+  padding:2px 7px;border-radius:6px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+.badge.lv-low{background:#e8f0ff;color:#2563eb}
+.badge.lv-ok{background:#e6f6ef;color:#0f8a5f}
+.badge.lv-warn{background:#fff1e6;color:#c2410c}
+.badge.lv-high{background:#fee2e2;color:#dc2626}
+.badge.lv-severe{background:#dc2626;color:#fff}
+
+#toast{
+  position:fixed;left:50%;bottom:calc(98px + env(safe-area-inset-bottom));
+  transform:translate(-50%,14px);background:rgba(24,34,48,.94);color:#fff;
+  font-size:15px;padding:11px 20px;border-radius:11px;opacity:0;pointer-events:none;
+  transition:all .22s;z-index:99;white-space:nowrap;max-width:88vw;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media(min-width:760px){
+  body{padding:12px 0 28px}
+  .app{padding:0 20px}
+  .topbar{padding:8px 4px 14px}
+  .tabbar{
+    position:sticky;top:10px;bottom:auto;border:1px solid var(--line);
+    border-radius:14px;padding-bottom:0;box-shadow:0 4px 16px rgba(20,30,50,.06);
+    margin-bottom:16px;
+  }
+  .tabbar button{flex-direction:row;gap:8px;font-size:15px;min-height:52px;padding:0}
+  .tabbar button .ico{font-size:17px}
+  #toast{bottom:28px}
+  .chart-wrap{height:280px}
+  .update-bar{bottom:20px;left:auto;right:20px;max-width:380px}
+  .share-banner{top:0}
+}
+</style>
+</head>
+<body>
+
+<div id="offlineBar" class="status-bar" hidden>当前处于离线状态，记录仍会保存在本机</div>
+
+<div id="updateBar" class="update-bar" hidden>
+  <span>发现新版本，更新后可用</span>
+  <button type="button" id="updateBtn">立即更新</button>
+</div>
+
+<div class="app">
+
+  <div id="shareBanner" class="share-banner" hidden>
+    <div class="share-banner-info">
+      <span class="share-banner-icon">👤</span>
+      <div>
+        <div class="share-banner-title" id="shareBannerTitle">分享的记录</div>
+        <div class="share-banner-sub" id="shareBannerSub">只读查看</div>
+      </div>
+    </div>
+    <div class="share-banner-actions">
+      <button type="button" class="mini" id="shareSaveLocal">保存到本机</button>
+      <button type="button" class="mini" id="shareExit">退出</button>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <h1>血糖 · 尿酸 记录本</h1>
+    <p>数据只保存在本机，离线也能用</p>
+  </header>
+
+  <nav class="tabbar" id="tabbar">
+    <button type="button" data-view="entry" class="nav-entry active"><span class="ico">✍️</span>记录</button>
+    <button type="button" data-view="history" class="nav-history"><span class="ico">📋</span>历史</button>
+    <button type="button" data-view="trend" class="nav-trend"><span class="ico">📈</span>趋势</button>
+    <button type="button" data-view="data" class="nav-data"><span class="ico">⚙️</span>数据</button>
+  </nav>
+
+  <main>
+
+    <section id="view-entry" class="view active">
+      <div class="card">
+        <h2 id="formTitle">记一次</h2>
+        <form id="recordForm" novalidate>
+          <div class="grid2">
+            <label class="field"><span>日期</span><input type="date" id="date" required></label>
+            <label class="field"><span>时间</span><input type="time" id="time"></label>
+          </div>
+          <div class="grid2">
+            <label class="field"><span>血糖（mmol/L）</span>
+              <input type="number" id="glucose" inputmode="decimal" step="0.1" min="0" max="50" placeholder="比如 6.2">
+            </label>
+            <label class="field"><span>测量时段</span>
+              <select id="gtype">
+                <option>空腹</option>
+                <option>餐后2小时</option>
+                <option>餐后1小时</option>
+                <option>睡前</option>
+                <option>随机</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid2">
+            <label class="field"><span>尿酸（μmol/L）</span>
+              <input type="number" id="uric" inputmode="decimal" step="1" min="0" max="2000" placeholder="比如 420">
+            </label>
+            <label class="field"><span>备注（选填）</span>
+              <input type="text" id="note" maxlength="60" placeholder="比如 吃了面条">
+            </label>
+          </div>
+
+          <div class="field image-field">
+            <span>图片备注（选填）</span>
+            <div class="image-picker">
+              <label class="img-add">
+                <input type="file" id="imageInput" accept="image/*">
+                <span>＋ 添加图片</span>
+              </label>
+              <div id="imagePreview" class="img-preview" hidden>
+                <img id="previewImg" alt="预览">
+                <button type="button" id="removeImage" class="img-remove" aria-label="移除图片">×</button>
+              </div>
+            </div>
+            <p class="tip" id="imageTip">图片会压缩后保存在本机，不会上传；可拍照或从相册选择。</p>
+          </div>
+
+          <div class="btn-row two">
+            <button type="submit" class="btn primary" id="submitBtn">保存</button>
+            <button type="button" class="btn ghost" id="cancelEdit" hidden>取消修改</button>
+          </div>
+          <p class="tip">血糖和尿酸至少填一项。</p>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>今天的记录</h2>
+        <div id="todayList"></div>
+      </div>
+    </section>
+
+    <section id="view-history" class="view">
+      <div class="card">
+        <div class="card-head">
+          <h2>历史记录</h2>
+          <select id="rangeFilter" class="range-select">
+            <option value="0">全部</option>
+            <option value="7">近 7 天</option>
+            <option value="30">近 30 天</option>
+            <option value="90">近 90 天</option>
+            <option value="180">近 180 天</option>
+          </select>
+        </div>
+        <p class="tip" id="count" style="margin:-8px 0 12px"></p>
+        <div id="list"></div>
+      </div>
+    </section>
+
+    <section id="view-trend" class="view">
+      <div class="stats" id="stats"></div>
+      <div class="card">
+        <div class="card-head">
+          <h2>变化趋势</h2>
+          <div class="trend-controls">
+            <select id="trendRange" class="range-select">
+              <option value="30">近 30 天</option>
+              <option value="90" selected>近 90 天</option>
+              <option value="180">近 180 天</option>
+              <option value="0">全部</option>
+            </select>
+            <div class="seg" id="metricSeg">
+              <button type="button" data-metric="glucose" class="active">血糖</button>
+              <button type="button" data-metric="uric">尿酸</button>
+            </div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chart"></canvas>
+          <div id="chartTip" class="chart-tip" hidden></div>
+        </div>
+        <div class="legend">
+          <span><i class="band"></i>参考范围</span>
+          <span><i style="background:#2563eb"></i>偏低</span>
+          <span><i style="background:#0f8a5f"></i>正常</span>
+          <span><i style="background:#ea580c"></i>偏高</span>
+          <span><i style="background:#dc2626"></i>高</span>
+          <span><i style="background:#9f1239"></i>严重</span>
+        </div>
+        <p class="tip ref-note">
+          绿色带为常见参考范围：血糖 3.9–7.8 mmol/L（空腹宜 ≤6.1，餐后 2 小时宜 &lt;7.8）；尿酸 208–420 μmol/L。仅供参考，请以医生建议为准。
+        </p>
+        <div class="chart-tools">
+          <span class="gesture-hint">双指捏合 / 滚轮缩放 · 左右拖动平移 · 点击数据点查看数值、备注和图片</span>
+          <button type="button" class="mini" id="resetZoom">重置缩放</button>
+        </div>
+        <p class="tip" id="chartHint"></p>
+      </div>
+    </section>
+
+    <section id="view-data" class="view">
+
+      <div class="card" id="installCard" hidden>
+        <h2>安装到主屏幕</h2>
+        <button type="button" class="btn primary" id="installBtn">添加到主屏幕</button>
+        <p class="tip" id="iosHint" hidden>在 Safari 中点击底部「分享」按钮，选择「添加到主屏幕」。</p>
+        <p class="tip" id="installTip">安装后可以像 App 一样全屏打开，没有地址栏，离线也能用。</p>
+      </div>
+
+      <div class="card">
+        <h2>我的名字</h2>
+        <input type="text" id="ownerName" maxlength="20" placeholder="比如 张三">
+        <button type="button" class="btn primary" id="saveOwnerName" style="margin-top:10px">保存名字</button>
+        <p class="tip">分享链接会显示这个名字，方便家人识别是谁的数据。</p>
+      </div>
+
+      <div class="card">
+        <h2>分享给家人</h2>
+        <button type="button" class="btn primary" id="shareBtn">生成分享链接（近 30 天）</button>
+        <p class="tip">生成一个链接，复制后粘贴到微信发送。对方点开链接就能看到近 30 天的趋势和记录，不会影响本机数据。分享不含图片。</p>
+      </div>
+
+      <div class="card">
+        <h2>导出备份</h2>
+        <div class="btn-row two">
+          <button type="button" class="btn" id="exportJson">导出 JSON（含图片）</button>
+          <button type="button" class="btn" id="exportCsv">导出 CSV 表格</button>
+        </div>
+        <p class="tip">JSON 会带上图片，适合完整备份和换机迁移；CSV 不含图片，适合用 Excel 查看。</p>
+      </div>
+
+      <div class="card">
+        <h2>导入数据</h2>
+        <label class="btn file-btn">选择文件导入
+          <input type="file" id="importFile" accept=".json,.csv,application/json,text/csv">
+        </label>
+        <p class="tip">支持本页面导出的 JSON / CSV，重复记录会自动跳过；JSON 里的图片会一起导入。</p>
+      </div>
+
+      <div class="card">
+        <h2>清空</h2>
+        <button type="button" class="btn danger" id="clearAll">清空全部记录</button>
+        <p class="tip">清空后无法恢复，请先导出备份。</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="imgViewer" class="img-viewer" hidden>
+  <button type="button" id="imgViewerClose" class="img-viewer-close" aria-label="关闭">×</button>
+  <img id="imgViewerImg" alt="图片备注">
+  <div id="imgViewerCaption" class="img-viewer-caption"></div>
+</div>
+
+<div id="shareDialog" class="dialog" hidden>
+  <div class="dialog-card">
+    <h3>分享链接已生成</h3>
+    <p class="dialog-tip">复制下面的链接，粘贴到微信发给家人。对方点开就能查看近 30 天的趋势和记录（不含图片）。</p>
+    <textarea id="shareUrl" readonly></textarea>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="shareCopy">复制链接</button>
+      <button type="button" class="btn primary" id="shareClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'glu_uric_records_v1';
+  var OWNER_KEY = 'glu_uric_owner_v1';
+  var records = [];
+  var editingId = null;
+  var metric = 'glucose';
+  var trendRange = 90;
+  var toastTimer = null;
+
+  var view = { start: 0, span: 0 };
+  var selectedIndex = -1;
+  var chartGeom = null;
+  var gesture = null;
+  var INITIAL_SPAN = 41;
+  var MIN_SPAN = 3;
+  var MAX_RAW = 80;
+
+  var pendingImage = null;
+  var pendingImageRemoved = false;
+  var previewUrl = null;
+  var imgUrlCache = {};
+  var imgLoading = {};
+
+  // 分享模式
+  var shareMode = false;
+  var sharedRecords = [];
+  var sharedOwner = '';
+
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function p2(n) { return String(n).padStart(2, '0'); }
+  function fmtDate(d) { return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); }
+  function todayStr() { return fmtDate(new Date()); }
+  function nowTime() { var d = new Date(); return p2(d.getHours()) + ':' + p2(d.getMinutes()); }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fnum(v, d) { return (v == null || !isFinite(v)) ? '--' : Number(v).toFixed(d == null ? 1 : d); }
+  function numOrNull(v) {
+    if (v == null) return null;
+    var s = String(v).trim();
+    if (s === '') return null;
+    var n = Number(s);
+    return isFinite(n) ? n : null;
   }
 
-  event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req).then((res) => {
-        if (res && res.status === 200 && res.type === 'basic') {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+  function normDate(s) {
+    s = String(s == null ? '' : s).trim();
+    var m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (m) return m[1] + '-' + p2(m[2]) + '-' + p2(m[3]);
+    m = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日?/);
+    if (m) return m[1] + '-' + p2(m[2]) + '-' + p2(m[3]);
+    return '';
+  }
+  function normTime(s) {
+    s = String(s == null ? '' : s).trim();
+    if (!s) return '';
+    var m = s.match(/^(\d{1,2})[:：](\d{1,2})/);
+    if (m) return p2(m[1]) + ':' + p2(m[2]);
+    m = s.match(/^(\d{1,2})\s*时\s*(\d{1,2})?/);
+    if (m) return p2(m[1]) + ':' + p2(m[2] || 0);
+    return '';
+  }
+
+  function keyOf(r) { return (r.date || '') + ' ' + (r.time || '00:00'); }
+  function sortDesc() { return activeRecords().slice().sort(function (a, b) { return keyOf(b).localeCompare(keyOf(a)); }); }
+  function sortAsc() { return activeRecords().slice().sort(function (a, b) { return keyOf(a).localeCompare(keyOf(b)); }); }
+
+  function activeRecords() { return shareMode ? sharedRecords : records; }
+
+  function weekday(s) {
+    var d = new Date(s + 'T00:00:00');
+    if (isNaN(d)) return '';
+    return '周' + '日一二三四五六'[d.getDay()];
+  }
+  function dateLabel(s) {
+    var p = String(s).split('-');
+    if (p.length !== 3) return s;
+    return p[0] + '年' + Number(p[1]) + '月' + Number(p[2]) + '日';
+  }
+  function relDay(s) {
+    if (s === todayStr()) return '今天';
+    var y = new Date(); y.setDate(y.getDate() - 1);
+    if (s === fmtDate(y)) return '昨天';
+    return '';
+  }
+
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 1700);
+  }
+
+  /* ---------- owner 名字 ---------- */
+
+  function getOwnerName() {
+    try { return localStorage.getItem(OWNER_KEY) || ''; } catch (e) { return ''; }
+  }
+  function setOwnerName(name) {
+    try { localStorage.setItem(OWNER_KEY, name); } catch (e) {}
+  }
+
+  /* ---------- IndexedDB ---------- */
+
+  var DB_NAME = 'glu_uric_db_v1';
+  var DB_STORE = 'images';
+  var dbPromise = null;
+
+  function openDB() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise(function (resolve, reject) {
+      if (!('indexedDB' in window)) { reject(new Error('当前浏览器不支持本地图片存储')); return; }
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = function (e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+      };
+      req.onsuccess = function (e) { resolve(e.target.result); };
+      req.onerror = function () { reject(req.error || new Error('打开本地数据库失败')); };
+    });
+    return dbPromise;
+  }
+
+  function idbPut(key, value) {
+    return openDB().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).put(value, key);
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    });
+  }
+
+  function idbGet(key) {
+    return openDB().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(DB_STORE, 'readonly');
+        var req = tx.objectStore(DB_STORE).get(key);
+        req.onsuccess = function () { resolve(req.result || null); };
+        req.onerror = function () { reject(req.error); };
+      });
+    });
+  }
+
+  function idbDelete(key) {
+    return openDB().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).delete(key);
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    });
+  }
+
+  function idbClear() {
+    return openDB().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).clear();
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    });
+  }
+
+  /* ---------- 图片工具 ---------- */
+
+  function compressImage(file, maxSize, quality) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var w = img.naturalWidth || img.width;
+          var h = img.naturalHeight || img.height;
+          if (!w || !h) { reject(new Error('图片尺寸无效')); return; }
+          var scale = Math.min(1, maxSize / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * scale));
+          var ch = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement('canvas');
+          canvas.width = cw;
+          canvas.height = ch;
+          var ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, cw, ch);
+          ctx.drawImage(img, 0, 0, cw, ch);
+          canvas.toBlob(function (blob) {
+            if (blob) resolve(blob);
+            else reject(new Error('图片压缩失败'));
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = function () { reject(new Error('图片读取失败')); };
+        img.src = reader.result;
+      };
+      reader.onerror = function () { reject(new Error('文件读取失败')); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function blobToDataURL(blob) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function dataURLToBlob(dataURL) {
+    var parts = String(dataURL).split(',');
+    if (parts.length < 2) throw new Error('图片数据无效');
+    var mime = (parts[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
+    var bin = atob(parts[1]);
+    var len = bin.length;
+    var arr = new Uint8Array(len);
+    for (var i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  function revokeImgUrl(id) {
+    if (id && imgUrlCache[id]) {
+      try { URL.revokeObjectURL(imgUrlCache[id]); } catch (e) {}
+      delete imgUrlCache[id];
+    }
+  }
+
+  function getImgUrl(imageId) {
+    if (!imageId) return Promise.resolve('');
+    if (imgUrlCache[imageId]) return Promise.resolve(imgUrlCache[imageId]);
+    if (imgLoading[imageId]) return imgLoading[imageId];
+    var p = idbGet(imageId).then(function (v) {
+      imgLoading[imageId] = null;
+      if (!v || !v.blob) return '';
+      var url = URL.createObjectURL(v.blob);
+      imgUrlCache[imageId] = url;
+      return url;
+    }).catch(function () {
+      imgLoading[imageId] = null;
+      return '';
+    });
+    imgLoading[imageId] = p;
+    return p;
+  }
+
+  /* ---------- 健康分级 ---------- */
+
+  var LEVEL_LABEL = { low: '偏低', ok: '正常', warn: '偏高', high: '高', severe: '严重' };
+  var LEVEL_COLOR = { low: '#2563eb', ok: '#0f8a5f', warn: '#ea580c', high: '#dc2626', severe: '#9f1239' };
+
+  function glucoseLevel(v, type) {
+    if (v == null) return '';
+    if (v < 3.9) return 'low';
+    var t = type || '随机';
+    if (t === '空腹') {
+      if (v <= 6.1) return 'ok';
+      if (v <= 7.0) return 'warn';
+      if (v <= 10.0) return 'high';
+      return 'severe';
+    }
+    if (t === '餐后1小时') {
+      if (v <= 8.9) return 'ok';
+      if (v <= 11.1) return 'warn';
+      if (v <= 13.9) return 'high';
+      return 'severe';
+    }
+    if (v <= 7.8) return 'ok';
+    if (v <= 11.1) return 'warn';
+    if (v <= 13.9) return 'high';
+    return 'severe';
+  }
+
+  function uricLevel(v) {
+    if (v == null) return '';
+    if (v <= 420) return 'ok';
+    if (v <= 480) return 'warn';
+    if (v <= 540) return 'high';
+    return 'severe';
+  }
+
+  function badgeHTML(lv) {
+    if (!lv) return '';
+    return '<span class="badge lv-' + lv + '">' + LEVEL_LABEL[lv] + '</span>';
+  }
+
+  /* ---------- 存储 ---------- */
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      records = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(records)) records = [];
+    } catch (e) { records = []; }
+  }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(records)); }
+    catch (e) { alert('保存失败，可能是存储空间已满：' + e.message); }
+  }
+
+  /* ---------- 视图 ---------- */
+
+  function showView(v, noScroll) {
+    $$('.view').forEach(function (s) { s.classList.toggle('active', s.id === 'view-' + v); });
+    $$('#tabbar button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-view') === v);
+    });
+    if (v === 'trend') setTimeout(drawChart, 30);
+    if (!noScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ---------- 图片渲染 ---------- */
+
+  function hydrateImages(root) {
+    var scope = root || document;
+    var imgs = scope.querySelectorAll('img[data-img-id]');
+    Array.prototype.forEach.call(imgs, function (el) {
+      var id = el.getAttribute('data-img-id');
+      if (!id) return;
+      if (imgUrlCache[id]) {
+        if (el.src !== imgUrlCache[id]) el.src = imgUrlCache[id];
+        return;
+      }
+      getImgUrl(id).then(function (url) {
+        if (!url) {
+          var wrap = el.parentElement;
+          if (wrap && wrap.classList.contains('rec-img-wrap')) wrap.hidden = true;
+          return;
         }
-        return res;
-      }).catch(() => cached);
-    })
-  );
-});
+        if (el.getAttribute('data-img-id') === id) el.src = url;
+      });
+    });
+  }
+
+  /* ---------- 渲染 ---------- */
+
+  function recHTML(r) {
+    var gLv = glucoseLevel(r.glucose, r.gtype);
+    var uLv = uricLevel(r.uric);
+    var parts = '';
+
+    if (r.glucose != null) {
+      parts += '<div class="v"><div class="k">血糖</div><b class="lv-' + gLv + '">' +
+        fnum(r.glucose, 1) + '</b> <span class="u">mmol/L</span>' + badgeHTML(gLv) + '</div>';
+    }
+    if (r.uric != null) {
+      parts += '<div class="v"><div class="k">尿酸</div><b class="lv-' + uLv + '">' +
+        fnum(r.uric, 0) + '</b> <span class="u">μmol/L</span>' + badgeHTML(uLv) + '</div>';
+    }
+    var tag = (r.glucose != null && r.gtype) ? '<span class="tag">' + esc(r.gtype) + '</span>' : '';
+
+    var cardLv = '';
+    var rank = { low: 0, ok: 0, warn: 1, high: 2, severe: 3 };
+    if ((rank[gLv] || 0) >= 2 || (rank[uLv] || 0) >= 2) cardLv = ' lv-high';
+    if (gLv === 'severe' || uLv === 'severe') cardLv = ' lv-severe';
+
+    var imgHtml = '';
+    if (r.imageId) {
+      imgHtml = '<div class="rec-img-wrap"><img class="rec-img" data-img-id="' + esc(r.imageId) +
+        '" alt="' + esc(r.imageName || '图片备注') + '" loading="lazy"></div>';
+    }
+
+    var opsHtml = '';
+    if (!shareMode) {
+      opsHtml = '<div class="ops">' +
+        '<button type="button" class="mini" data-act="edit" data-id="' + esc(r.id) + '">改</button>' +
+        '<button type="button" class="mini danger" data-act="del" data-id="' + esc(r.id) + '">删</button>' +
+        '</div>';
+    }
+
+    return '<div class="rec' + cardLv + '">' +
+      '<div class="head">' +
+        '<div><span class="when">' + esc(r.time || '--:--') + '</span>' + tag + '</div>' +
+        opsHtml +
+      '</div>' +
+      '<div class="vals">' + parts + '</div>' +
+      (r.note ? '<div class="note">' + esc(r.note) + '</div>' : '') +
+      imgHtml +
+    '</div>';
+  }
+
+  function renderToday() {
+    if (shareMode) return;
+    var t = todayStr();
+    var items = records.filter(function (r) { return r.date === t; })
+      .sort(function (a, b) { return (b.time || '').localeCompare(a.time || ''); });
+    var el = $('#todayList');
+    el.innerHTML = items.length ? items.map(recHTML).join('') : '<p class="empty">今天还没有记录</p>';
+    hydrateImages(el);
+  }
+
+  function renderList() {
+    var list = $('#list');
+    var days = Number($('#rangeFilter').value) || 0;
+    var arr = sortDesc();
+
+    if (days > 0) {
+      var cut = new Date();
+      cut.setHours(0, 0, 0, 0);
+      cut.setDate(cut.getDate() - (days - 1));
+      var cutStr = fmtDate(cut);
+      arr = arr.filter(function (r) { return r.date >= cutStr; });
+    }
+
+    if (shareMode) {
+      $('#count').textContent = '分享记录共 ' + sharedRecords.length + ' 条' +
+        (days > 0 ? '，当前显示 ' + arr.length + ' 条' : '');
+    } else {
+      $('#count').textContent = '共 ' + records.length + ' 条记录' +
+        (days > 0 ? '，当前显示 ' + arr.length + ' 条' : '');
+    }
+
+    if (!arr.length) {
+      list.innerHTML = '<p class="empty">' + (activeRecords().length ? '这个时间段没有记录' : '还没有记录，去「记录」里加一条吧') + '</p>';
+      return;
+    }
+
+    var map = {}, order = [];
+    arr.forEach(function (r) {
+      if (!map[r.date]) { map[r.date] = []; order.push(r.date); }
+      map[r.date].push(r);
+    });
+
+    var html = '';
+    order.forEach(function (date) {
+      var rel = relDay(date);
+      html += '<div class="day-title">' + dateLabel(date) + ' · ' + weekday(date) +
+              (rel ? ' · ' + rel : '') + '</div>';
+      map[date].forEach(function (r) { html += recHTML(r); });
+    });
+    list.innerHTML = html;
+    hydrateImages(list);
+  }
+
+  function renderStats() {
+    var all = activeRecords();
+    var sorted = sortDesc();
+    var lastG = null, lastU = null;
+    for (var i = 0; i < sorted.length; i++) {
+      if (!lastG && sorted[i].glucose != null) lastG = sorted[i];
+      if (!lastU && sorted[i].uric != null) lastU = sorted[i];
+      if (lastG && lastU) break;
+    }
+
+    var cut = new Date();
+    cut.setHours(0, 0, 0, 0);
+    cut.setDate(cut.getDate() - 6);
+    var cutStr = fmtDate(cut);
+
+    var g7 = all.filter(function (r) { return r.glucose != null && r.date >= cutStr; });
+    var avgG = g7.length ? g7.reduce(function (s, r) { return s + r.glucose; }, 0) / g7.length : null;
+
+    var gLv = lastG ? glucoseLevel(lastG.glucose, lastG.gtype) : '';
+    var uLv = lastU ? uricLevel(lastU.uric) : '';
+
+    $('#stats').innerHTML =
+      '<div class="stat"><div class="k">' + (shareMode ? '分享记录' : '记录条数') + '</div><div class="v">' + all.length + '<small>条</small></div></div>' +
+      '<div class="stat"><div class="k">最近血糖</div><div class="v ' +
+        (gLv ? 'lv-' + gLv : '') + '">' + (lastG ? fnum(lastG.glucose, 1) : '--') +
+        '<small>mmol/L</small>' +
+        (lastG ? '<span class="lvl">' + badgeHTML(gLv) + '</span>' : '') + '</div></div>' +
+      '<div class="stat"><div class="k">近7天平均血糖</div><div class="v">' +
+        (avgG != null ? fnum(avgG, 1) : '--') + '<small>mmol/L</small></div></div>' +
+      '<div class="stat"><div class="k">最近尿酸</div><div class="v ' +
+        (uLv ? 'lv-' + uLv : '') + '">' + (lastU ? fnum(lastU.uric, 0) : '--') +
+        '<small>μmol/L</small>' +
+        (lastU ? '<span class="lvl">' + badgeHTML(uLv) + '</span>' : '') + '</div></div>';
+  }
+
+  /* ---------- 趋势数据 ---------- */
+
+  function buildPoints(key) {
+    var arr = activeRecords().slice();
+    if (trendRange > 0) {
+      var cut = new Date();
+      cut.setHours(0, 0, 0, 0);
+      cut.setDate(cut.getDate() - (trendRange - 1));
+      var cutStr = fmtDate(cut);
+      arr = arr.filter(function (r) { return r.date >= cutStr; });
+    }
+
+    var withKey = arr.filter(function (r) { return r[key] != null; });
+    withKey.sort(function (a, b) { return keyOf(a).localeCompare(keyOf(b)); });
+
+    if (withKey.length <= MAX_RAW) {
+      return {
+        points: withKey.map(function (r) {
+          return {
+            date: r.date, time: r.time, glucose: r.glucose,
+            uric: r.uric, gtype: r.gtype, note: r.note || '',
+            imageId: r.imageId || null,
+            imageName: r.imageName || '',
+            _count: 1
+          };
+        }),
+        aggregated: false,
+        total: withKey.length
+      };
+    }
+
+    var dayMap = {}, dayOrder = [];
+    withKey.forEach(function (r) {
+      if (!dayMap[r.date]) { dayMap[r.date] = []; dayOrder.push(r.date); }
+      dayMap[r.date].push(r);
+    });
+    dayOrder.sort();
+
+    var otherKey = key === 'glucose' ? 'uric' : 'glucose';
+    var otherByDay = {};
+    arr.forEach(function (r) {
+      if (r[otherKey] == null) return;
+      (otherByDay[r.date] = otherByDay[r.date] || []).push(r);
+    });
+
+    var points = dayOrder.map(function (d) {
+      var list = dayMap[d];
+      var p = {
+        date: d,
+        time: list[list.length - 1].time || '',
+        _count: list.length,
+        _agg: true
+      };
+      p[key] = list.reduce(function (s, r) { return s + r[key]; }, 0) / list.length;
+      p.gtype = (key === 'glucose')
+        ? (list[list.length - 1].gtype || '随机')
+        : '随机';
+
+      var noteSet = [];
+      list.forEach(function (r) {
+        var n = (r.note || '').trim();
+        if (n && noteSet.indexOf(n) < 0) noteSet.push(n);
+      });
+      p.note = noteSet.join('；').slice(0, 80);
+
+      var imgRec = null;
+      for (var i = list.length - 1; i >= 0; i--) {
+        if (list[i].imageId) { imgRec = list[i]; break; }
+      }
+      if (imgRec) {
+        p.imageId = imgRec.imageId;
+        p.imageName = imgRec.imageName || '';
+      } else {
+        p.imageId = null;
+        p.imageName = '';
+      }
+
+      if (otherByDay[d]) {
+        var ol = otherByDay[d];
+        p[otherKey] = ol.reduce(function (s, r) { return s + r[otherKey]; }, 0) / ol.length;
+        if (otherKey === 'glucose') p.gtype = ol[ol.length - 1].gtype || '随机';
+      }
+      return p;
+    });
+
+    return { points: points, aggregated: true, total: withKey.length };
+  }
+
+  function resetTrendView() {
+    view.start = 0;
+    view.span = 0;
+    selectedIndex = -1;
+    hideTip();
+  }
+
+  function hideTip() {
+    var tip = document.getElementById('chartTip');
+    if (tip) tip.hidden = true;
+  }
+
+  function positionTip() {
+    var tip = document.getElementById('chartTip');
+    var g = chartGeom;
+    if (!g || selectedIndex < 0 || selectedIndex < g.i0 || selectedIndex > g.i1) {
+      hideTip();
+      return;
+    }
+    var p = g.points[selectedIndex];
+    var v = p[g.key];
+    if (v == null) { hideTip(); return; }
+
+    var html = '<div class="tip-date">' + dateLabel(p.date) + ' ' + weekday(p.date) +
+      (p.time ? ' · ' + p.time : '') + (p._agg ? ' · 当天平均' : '') + '</div>';
+
+    if (p.glucose != null) {
+      var lg = glucoseLevel(p.glucose, p.gtype);
+      html += '<div class="tip-row"><i class="dot" style="background:' + LEVEL_COLOR[lg] + '"></i>' +
+        '血糖 <b>' + fnum(p.glucose, 1) + '</b> <span class="tu">mmol/L</span>' +
+        '<span class="badge lv-' + lg + '">' + LEVEL_LABEL[lg] + '</span></div>';
+    }
+    if (p.uric != null) {
+      var lu = uricLevel(p.uric);
+      html += '<div class="tip-row"><i class="dot" style="background:' + LEVEL_COLOR[lu] + '"></i>' +
+        '尿酸 <b>' + fnum(p.uric, 0) + '</b> <span class="tu">μmol/L</span>' +
+        '<span class="badge lv-' + lu + '">' + LEVEL_LABEL[lu] + '</span></div>';
+    }
+    if (p.note) {
+      html += '<div class="tip-note">备注：' + esc(p.note) + '</div>';
+    }
+
+    var imgUrl = p.imageId ? (imgUrlCache[p.imageId] || '') : '';
+    if (p.imageId) {
+      html += '<div class="tip-img-wrap">' +
+        '<img class="tip-img" data-tip-img-id="' + esc(p.imageId) + '"' +
+        (imgUrl ? ' src="' + imgUrl + '"' : '') +
+        ' alt="' + esc(p.imageName || '图片备注') + '">' +
+        '</div>';
+    }
+
+    tip.innerHTML = html;
+    tip.hidden = false;
+
+    if (p.imageId && !imgUrl) {
+      var wantId = p.imageId;
+      getImgUrl(wantId).then(function (url) {
+        if (!url) {
+          var curWrap = tip.querySelector('.tip-img-wrap');
+          if (curWrap && tip.querySelector('img[data-tip-img-id="' + wantId + '"]')) curWrap.hidden = true;
+          return;
+        }
+        var cur = tip.querySelector('img[data-tip-img-id="' + wantId + '"]');
+        if (cur) cur.src = url;
+      });
+    }
+
+    var tw = tip.offsetWidth;
+    var th = tip.offsetHeight;
+    var px = g.x(selectedIndex);
+    var py = g.y(v);
+
+    var left = px - tw / 2;
+    left = clamp(left, 4, Math.max(4, g.W - tw - 4));
+
+    var top = py - th - 12;
+    if (top < 4) top = py + 14;
+    top = clamp(top, 4, Math.max(4, g.H - th - 4));
+
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+
+  /* ---------- 趋势图绘制 ---------- */
+
+  function drawChart() {
+    var canvas = document.getElementById('chart');
+    var wrap = canvas.parentElement;
+    var W = wrap.clientWidth;
+    if (!W || W < 40) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var H = wrap.clientHeight || 230;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    var key = metric;
+    var unit = key === 'glucose' ? 'mmol/L' : 'μmol/L';
+    var dec = key === 'glucose' ? 1 : 0;
+    var hint = document.getElementById('chartHint');
+
+    var data = buildPoints(key);
+    var points = data.points;
+    var n = points.length;
+
+    if (!n) {
+      chartGeom = null;
+      hideTip();
+      hint.textContent = '这个时间段内暂无' + (key === 'glucose' ? '血糖' : '尿酸') + '数据';
+      ctx.fillStyle = '#a3adbb';
+      ctx.font = '15px -apple-system,PingFang SC,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('暂无数据', W / 2, H / 2);
+      return;
+    }
+
+    var padL = 46, padR = 12, padT = 16, padB = 26;
+    var cw = W - padL - padR;
+    var ch = H - padT - padB;
+
+    var start, span;
+    if (view.span <= 0) {
+      if (n - 1 <= INITIAL_SPAN) { start = 0; span = Math.max(n - 1, 1); }
+      else { span = INITIAL_SPAN; start = (n - 1) - span; }
+    } else {
+      start = view.start;
+      span = view.span;
+    }
+    if (n - 1 <= MIN_SPAN) {
+      start = 0;
+      span = Math.max(n - 1, 1);
+    } else {
+      span = clamp(span, MIN_SPAN, n - 1);
+      start = clamp(start, 0, (n - 1) - span);
+    }
+    view.start = start;
+    view.span = span;
+
+    var i0 = Math.max(0, Math.floor(start));
+    var i1 = Math.min(n - 1, Math.ceil(start + span));
+    if (i1 < i0) i1 = i0;
+
+    var vals = [];
+    for (var i = i0; i <= i1; i++) {
+      if (points[i][key] != null) vals.push(points[i][key]);
+    }
+    if (!vals.length) vals = [0, 1];
+    var mn = Math.min.apply(null, vals);
+    var mx = Math.max.apply(null, vals);
+    if (mn === mx) { mn -= 1; mx += 1; }
+    var extra = (mx - mn) * 0.18;
+    mn -= extra; mx += extra;
+    if (mn < 0) mn = 0;
+    if (mx <= mn) mx = mn + 1;
+
+    function x(idx) {
+      if (n <= 1) return padL + cw / 2;
+      return padL + cw * (idx - start) / span;
+    }
+    function y(v) {
+      return padT + ch - ((v - mn) / (mx - mn)) * ch;
+    }
+
+    ctx.strokeStyle = '#eef2f7';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#a3adbb';
+    ctx.font = '12px -apple-system,PingFang SC,sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var s = 0; s <= 4; s++) {
+      var vv = mn + (mx - mn) * s / 4;
+      var yy = y(vv);
+      ctx.beginPath();
+      ctx.moveTo(padL, yy);
+      ctx.lineTo(W - padR, yy);
+      ctx.stroke();
+      ctx.fillText(fnum(vv, dec), padL - 8, yy);
+    }
+
+    var refBand = key === 'glucose' ? { lo: 3.9, hi: 7.8 } : { lo: 208, hi: 420 };
+    var bandTop = Math.max(padT, y(refBand.hi));
+    var bandBot = Math.min(padT + ch, y(refBand.lo));
+    if (bandBot > bandTop) {
+      ctx.fillStyle = 'rgba(15,138,95,.085)';
+      ctx.fillRect(padL, bandTop, cw, bandBot - bandTop);
+    }
+    [refBand.hi, refBand.lo].forEach(function (v) {
+      if (v < mn || v > mx) return;
+      var ry = y(v);
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = 'rgba(15,138,95,.5)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(padL, ry);
+      ctx.lineTo(W - padR, ry);
+      ctx.stroke();
+      ctx.restore();
+    });
+    if (bandBot - bandTop > 16) {
+      ctx.fillStyle = 'rgba(15,138,95,.9)';
+      ctx.font = '10px -apple-system,PingFang SC,sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('参考范围', padL + 4, bandTop + 3);
+    }
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(padL, 0, cw, H);
+    ctx.clip();
+
+    var baseColor = key === 'glucose' ? '#2563eb' : '#c2410c';
+
+    var grad = ctx.createLinearGradient(0, padT, 0, padT + ch);
+    grad.addColorStop(0, key === 'glucose' ? 'rgba(37,99,235,.18)' : 'rgba(194,65,12,.15)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.beginPath();
+    for (var a = i0; a <= i1; a++) {
+      var ax = x(a), ay = y(points[a][key]);
+      if (a === i0) ctx.moveTo(ax, ay); else ctx.lineTo(ax, ay);
+    }
+    ctx.lineTo(x(i1), padT + ch);
+    ctx.lineTo(x(i0), padT + ch);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    for (var b = i0; b <= i1; b++) {
+      var bx = x(b), by = y(points[b][key]);
+      if (b === i0) ctx.moveTo(bx, by); else ctx.lineTo(bx, by);
+    }
+    ctx.strokeStyle = baseColor;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    for (var c = i0; c <= i1; c++) {
+      var pv = points[c][key];
+      var lv = key === 'glucose'
+        ? glucoseLevel(pv, points[c].gtype)
+        : uricLevel(pv);
+      var col = LEVEL_COLOR[lv] || baseColor;
+      var rad = lv === 'severe' ? 4.8 : (lv === 'high' ? 4.2 : 3.4);
+
+      ctx.beginPath();
+      ctx.arc(x(c), y(pv), rad, 0, Math.PI * 2);
+      ctx.fillStyle = col;
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    if (selectedIndex >= i0 && selectedIndex <= i1) {
+      var sp = points[selectedIndex];
+      var sv = sp[key];
+      if (sv != null) {
+        var sx = x(selectedIndex), sy = y(sv);
+        ctx.beginPath();
+        ctx.arc(sx, sy, 10, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(37,99,235,.14)';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(sx, sy, 6.5, 0, Math.PI * 2);
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+
+    var visCount = i1 - i0 + 1;
+    var labelIdx = [];
+    if (visCount <= 5) {
+      for (var d = i0; d <= i1; d++) labelIdx.push(d);
+    } else {
+      for (var q = 0; q < 5; q++) labelIdx.push(i0 + Math.round(q * (visCount - 1) / 4));
+    }
+
+    ctx.fillStyle = '#a3adbb';
+    ctx.font = '12px -apple-system,PingFang SC,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    var seen = {};
+    labelIdx.forEach(function (idx) {
+      if (seen[idx]) return;
+      seen[idx] = 1;
+      var lx = x(idx);
+      if (lx < padL + 12 || lx > W - padR - 12) return;
+      ctx.fillText(points[idx].date.slice(5), lx, padT + ch + 7);
+    });
+
+    if (data.aggregated) {
+      hint.textContent = '按天平均显示，共 ' + n + ' 个点，当前可见 ' + visCount + ' 个（单位：' + unit + '）';
+    } else {
+      hint.textContent = '共 ' + n + ' 次记录，当前可见 ' + visCount + ' 个（单位：' + unit + '）';
+    }
+
+    chartGeom = {
+      points: points, n: n, key: key,
+      start: start, span: span, i0: i0, i1: i1,
+      x: x, y: y, padL: padL, padR: padR, padT: padT, padB: padB,
+      cw: cw, ch: ch, W: W, H: H, mn: mn, mx: mx
+    };
+
+    positionTip();
+  }
+
+  function zoomAt(clientX, factor) {
+    var g = chartGeom;
+    if (!g || g.n < 3) return;
+    var rect = document.getElementById('chart').getBoundingClientRect();
+    var px = clientX - rect.left;
+    var ratio = clamp((px - g.padL) / g.cw, 0, 1);
+
+    var oldSpan = g.span;
+    var newSpan = clamp(oldSpan * factor, MIN_SPAN, g.n - 1);
+    var anchor = g.start + ratio * oldSpan;
+    var newStart = anchor - ratio * newSpan;
+
+    view.span = newSpan;
+    view.start = clamp(newStart, 0, Math.max((g.n - 1) - newSpan, 0));
+
+    selectedIndex = -1;
+    hideTip();
+    drawChart();
+  }
+
+  function handleTap(clientX, clientY) {
+    var g = chartGeom;
+    if (!g) return;
+    var rect = document.getElementById('chart').getBoundingClientRect();
+    var px = clientX - rect.left;
+    var py = clientY - rect.top;
+
+    if (px < g.padL || px > g.padL + g.cw || py < 0 || py > g.padT + g.ch + 20) {
+      selectedIndex = -1;
+      hideTip();
+      drawChart();
+      return;
+    }
+
+    var best = -1, bestD = Infinity;
+    for (var i = g.i0; i <= g.i1; i++) {
+      var v = g.points[i][g.key];
+      if (v == null) continue;
+      var dx = g.x(i) - px;
+      var dy = g.y(v) - py;
+      var d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = i; }
+    }
+
+    if (best >= 0 && bestD <= 44 * 44) {
+      selectedIndex = best;
+      drawChart();
+    } else {
+      selectedIndex = -1;
+      hideTip();
+      drawChart();
+    }
+  }
+
+  function startPinch(t1, t2) {
+    var g = chartGeom;
+    if (!g) return;
+    var dx = t2.clientX - t1.clientX;
+    var dy = t2.clientY - t1.clientY;
+    var d = Math.sqrt(dx * dx + dy * dy) || 1;
+    var rect = document.getElementById('chart').getBoundingClientRect();
+    var cx = (t1.clientX + t2.clientX) / 2 - rect.left;
+    var ratio = clamp((cx - g.padL) / g.cw, 0, 1);
+
+    gesture = {
+      mode: 'pinch',
+      d0: d,
+      start0: g.start,
+      span0: g.span,
+      ratio: ratio
+    };
+    selectedIndex = -1;
+    hideTip();
+  }
+
+  function updatePinch(t1, t2) {
+    var g = chartGeom;
+    if (!g || !gesture || gesture.mode !== 'pinch') return;
+    var dx = t2.clientX - t1.clientX;
+    var dy = t2.clientY - t1.clientY;
+    var d = Math.sqrt(dx * dx + dy * dy) || 1;
+
+    var scale = gesture.d0 / d;
+    var newSpan = clamp(gesture.span0 * scale, MIN_SPAN, Math.max(g.n - 1, 1));
+    var anchor = gesture.start0 + gesture.ratio * gesture.span0;
+    var newStart = anchor - gesture.ratio * newSpan;
+
+    view.span = newSpan;
+    view.start = clamp(newStart, 0, Math.max((g.n - 1) - newSpan, 0));
+    drawChart();
+  }
+
+  function initChartEvents() {
+    var canvas = document.getElementById('chart');
+
+    canvas.addEventListener('touchstart', function (e) {
+      if (!chartGeom) return;
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        startPinch(e.touches[0], e.touches[1]);
+      } else if (e.touches.length === 1) {
+        var t = e.touches[0];
+        gesture = {
+          mode: 'tap',
+          x0: t.clientX, y0: t.clientY,
+          start0: view.start, span0: view.span
+        };
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', function (e) {
+      if (!chartGeom) return;
+
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        if (!gesture || gesture.mode !== 'pinch') startPinch(e.touches[0], e.touches[1]);
+        else updatePinch(e.touches[0], e.touches[1]);
+        return;
+      }
+
+      if (e.touches.length === 1 && gesture) {
+        var t = e.touches[0];
+
+        if (gesture.mode === 'tap') {
+          var dx0 = t.clientX - gesture.x0;
+          var dy0 = t.clientY - gesture.y0;
+          if (Math.abs(dx0) > 10 && Math.abs(dx0) > Math.abs(dy0) * 1.2) {
+            gesture.mode = 'pan';
+            gesture.x0 = t.clientX;
+            gesture.start0 = view.start;
+            gesture.span0 = view.span;
+            selectedIndex = -1;
+            hideTip();
+          }
+        }
+
+        if (gesture.mode === 'pan') {
+          e.preventDefault();
+          var g = chartGeom;
+          var dx = t.clientX - gesture.x0;
+          var shift = (dx / g.cw) * gesture.span0;
+          view.start = clamp(gesture.start0 - shift, 0, Math.max((g.n - 1) - view.span, 0));
+          drawChart();
+        }
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function (e) {
+      if (gesture && gesture.mode === 'tap' && e.changedTouches.length) {
+        var t = e.changedTouches[0];
+        handleTap(t.clientX, t.clientY);
+      }
+      gesture = null;
+    });
+
+    canvas.addEventListener('touchcancel', function () { gesture = null; });
+
+    var mouseDown = false, mouseMoved = false;
+    var mx0 = 0, my0 = 0, mstart0 = 0, mspan0 = 0;
+
+    canvas.addEventListener('mousedown', function (e) {
+      if (!chartGeom) return;
+      mouseDown = true;
+      mouseMoved = false;
+      mx0 = e.clientX; my0 = e.clientY;
+      mstart0 = view.start; mspan0 = view.span;
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function (e) {
+      if (!mouseDown || !chartGeom) return;
+      var dx = e.clientX - mx0;
+      var dy = e.clientY - my0;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) mouseMoved = true;
+      if (mouseMoved) {
+        var g = chartGeom;
+        var shift = (dx / g.cw) * mspan0;
+        view.start = clamp(mstart0 - shift, 0, Math.max((g.n - 1) - view.span, 0));
+        selectedIndex = -1;
+        hideTip();
+        drawChart();
+      }
+    });
+
+    window.addEventListener('mouseup', function (e) {
+      if (!mouseDown) return;
+      mouseDown = false;
+      if (!mouseMoved && chartGeom) handleTap(e.clientX, e.clientY);
+    });
+
+    canvas.addEventListener('wheel', function (e) {
+      if (!chartGeom) return;
+      e.preventDefault();
+      var factor = e.deltaY > 0 ? 1.18 : 0.85;
+      zoomAt(e.clientX, factor);
+    }, { passive: false });
+
+    var resetBtn = document.getElementById('resetZoom');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        resetTrendView();
+        drawChart();
+      });
+    }
+  }
+
+  /* ---------- 表单 ---------- */
+
+  function showPreview(blob, name) {
+    var wrap = $('#imagePreview');
+    var img = $('#previewImg');
+    if (previewUrl) { try { URL.revokeObjectURL(previewUrl); } catch (e) {} previewUrl = null; }
+    var url = URL.createObjectURL(blob);
+    previewUrl = url;
+    img.src = url;
+    img.alt = name || '预览';
+    wrap.hidden = false;
+  }
+
+  function hidePreview() {
+    $('#imagePreview').hidden = true;
+    $('#previewImg').removeAttribute('src');
+    if (previewUrl) { try { URL.revokeObjectURL(previewUrl); } catch (e) {} previewUrl = null; }
+  }
+
+  function resetImageState() {
+    pendingImage = null;
+    pendingImageRemoved = false;
+    hidePreview();
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (shareMode) { alert('分享查看模式下不能编辑'); return; }
+
+    var date = $('#date').value;
+    var time = $('#time').value || '00:00';
+    var gRaw = $('#glucose').value.trim();
+    var uRaw = $('#uric').value.trim();
+    var gtype = $('#gtype').value;
+    var note = $('#note').value.trim();
+
+    if (!date) { alert('请选择日期'); return; }
+    if (gRaw === '' && uRaw === '') { alert('血糖和尿酸至少填一项'); return; }
+
+    var glucose = null, uric = null;
+
+    if (gRaw !== '') {
+      glucose = Number(gRaw);
+      if (!isFinite(glucose) || glucose <= 0 || glucose > 50) {
+        alert('血糖请输入 1 ~ 50 之间的数值');
+        return;
+      }
+    }
+    if (uRaw !== '') {
+      uric = Number(uRaw);
+      if (!isFinite(uric) || uric <= 0 || uric > 2000) {
+        alert('尿酸请输入 1 ~ 2000 之间的数值');
+        return;
+      }
+    }
+
+    var submitBtn = $('#submitBtn');
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+
+    try {
+      var imageId = null, imageName = '';
+
+      if (editingId) {
+        var old = records.filter(function (x) { return x.id === editingId; })[0];
+        if (old) {
+          imageId = old.imageId || null;
+          imageName = old.imageName || '';
+        }
+      }
+
+      if (pendingImage) {
+        var newId = uid();
+        await idbPut(newId, {
+          blob: pendingImage.blob,
+          name: pendingImage.name,
+          type: pendingImage.blob.type || 'image/jpeg',
+          addedAt: Date.now()
+        });
+        if (imageId && imageId !== newId) {
+          try { await idbDelete(imageId); } catch (err) {}
+          revokeImgUrl(imageId);
+        }
+        imageId = newId;
+        imageName = pendingImage.name;
+      } else if (pendingImageRemoved && imageId) {
+        try { await idbDelete(imageId); } catch (err) {}
+        revokeImgUrl(imageId);
+        imageId = null;
+        imageName = '';
+      }
+
+      if (editingId) {
+        var r = records.filter(function (x) { return x.id === editingId; })[0];
+        if (r) {
+          r.date = date; r.time = time; r.glucose = glucose;
+          r.uric = uric; r.gtype = gtype; r.note = note;
+          r.imageId = imageId || null;
+          r.imageName = imageName || '';
+        }
+        editingId = null;
+        $('#formTitle').textContent = '记一次';
+        $('#submitBtn').textContent = '保存';
+        $('#cancelEdit').hidden = true;
+        toast('已保存修改');
+      } else {
+        records.push({
+          id: uid(), date: date, time: time, glucose: glucose,
+          uric: uric, gtype: gtype, note: note,
+          imageId: imageId || null, imageName: imageName || '',
+          createdAt: Date.now()
+        });
+        toast('已保存');
+      }
+
+      persist();
+      resetImageState();
+      $('#glucose').value = '';
+      $('#uric').value = '';
+      $('#note').value = '';
+      renderAll();
+      $('#glucose').focus();
+    } catch (err) {
+      alert('保存失败：' + err.message);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  }
+
+  function startEdit(id) {
+    if (shareMode) return;
+    var r = records.filter(function (x) { return x.id === id; })[0];
+    if (!r) return;
+    editingId = id;
+    resetImageState();
+
+    $('#date').value = r.date;
+    $('#time').value = r.time || '';
+    $('#glucose').value = r.glucose != null ? r.glucose : '';
+    $('#uric').value = r.uric != null ? r.uric : '';
+    $('#gtype').value = r.gtype || '空腹';
+    $('#note').value = r.note || '';
+    $('#formTitle').textContent = '修改记录';
+    $('#submitBtn').textContent = '保存修改';
+    $('#cancelEdit').hidden = false;
+
+    if (r.imageId) {
+      idbGet(r.imageId).then(function (v) {
+        if (v && v.blob && editingId === id) showPreview(v.blob, v.name || r.imageName);
+      }).catch(function () {});
+    }
+
+    showView('entry');
+    setTimeout(function () {
+      document.getElementById('recordForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+  }
+
+  function cancelEdit() {
+    editingId = null;
+    $('#formTitle').textContent = '记一次';
+    $('#submitBtn').textContent = '保存';
+    $('#cancelEdit').hidden = true;
+    $('#glucose').value = '';
+    $('#uric').value = '';
+    $('#note').value = '';
+    resetImageState();
+  }
+
+  /* ---------- 导出 ---------- */
+
+  function download(filename, text, mime) {
+    var blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+
+  async function exportJSON() {
+    if (!records.length) { alert('还没有记录可以导出'); return; }
+    toast('正在打包导出…');
+
+    var list = sortAscForRecords();
+    var out = [];
+
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i];
+      var copy = {
+        id: r.id, date: r.date, time: r.time,
+        glucose: r.glucose, uric: r.uric,
+        gtype: r.gtype, note: r.note, createdAt: r.createdAt
+      };
+      if (r.imageId) {
+        try {
+          var v = await idbGet(r.imageId);
+          if (v && v.blob) {
+            copy.image = await blobToDataURL(v.blob);
+            copy.imageName = v.name || r.imageName || '图片';
+          }
+        } catch (e) {}
+      }
+      out.push(copy);
+    }
+
+    var data = {
+      app: '血糖尿酸记录本', version: 2,
+      owner: getOwnerName(),
+      exportedAt: new Date().toISOString(),
+      records: out
+    };
+
+    download('血糖尿酸记录_' + todayStr() + '.json',
+      JSON.stringify(data, null, 2), 'application/json;charset=utf-8');
+    toast('已导出 JSON（含图片）');
+  }
+
+  function sortAscForRecords() {
+    return records.slice().sort(function (a, b) { return keyOf(a).localeCompare(keyOf(b)); });
+  }
+
+  function csvCell(v) {
+    var s = String(v == null ? '' : v);
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  function exportCSV() {
+    if (!records.length) { alert('还没有记录可以导出'); return; }
+    var rows = [['日期', '时间', '血糖(mmol/L)', '血糖时段', '尿酸(μmol/L)', '备注']];
+    sortAscForRecords().forEach(function (r) {
+      var note = r.note || '';
+      if (r.imageId) note = (note ? note + ' ' : '') + '（有图片）';
+      rows.push([
+        r.date, r.time || '',
+        r.glucose != null ? r.glucose : '',
+        r.glucose != null ? (r.gtype || '') : '',
+        r.uric != null ? r.uric : '',
+        note
+      ]);
+    });
+    var csv = rows.map(function (row) { return row.map(csvCell).join(','); }).join('\r\n');
+    download('血糖尿酸记录_' + todayStr() + '.csv', '\ufeff' + csv, 'text/csv;charset=utf-8');
+    toast('已导出 CSV');
+  }
+
+  /* ---------- 分享 ---------- */
+
+  function getRecentRecords(days) {
+    var cut = new Date();
+    cut.setHours(0, 0, 0, 0);
+    cut.setDate(cut.getDate() - (days - 1));
+    var cutStr = fmtDate(cut);
+    return records.filter(function (r) { return r.date >= cutStr; });
+  }
+
+  function encodeSharePayload(list, name) {
+    var slim = list.map(function (r) {
+      var o = {
+        d: r.date,
+        t: r.time || '',
+        g: r.glucose != null ? r.glucose : null,
+        u: r.uric != null ? r.uric : null,
+        y: r.gtype || '',
+        n: r.note || ''
+      };
+      return o;
+    });
+    var payload = { n: name || '', v: 1, r: slim };
+    var json = JSON.stringify(payload);
+    var bytes = new TextEncoder().encode(json);
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    var b64 = btoa(bin);
+    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function decodeSharePayload(encoded) {
+    var b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var json = new TextDecoder().decode(bytes);
+    return JSON.parse(json);
+  }
+
+  function generateShareLink() {
+    var recent = getRecentRecords(30);
+    if (!recent.length) {
+      alert('近 30 天没有记录可以分享');
+      return null;
+    }
+    var name = getOwnerName() || '家人';
+    var encoded = encodeSharePayload(recent, name);
+    var base = location.href.split('#')[0];
+    var url = base + '#share=' + encoded;
+
+    if (url.length > 8000) {
+      var ok = confirm('分享链接较长（' + url.length + ' 字符），部分手机微信可能截断。\n\n建议先减少数据量，或使用「导出 JSON」发给家人导入。\n\n仍要生成链接吗？');
+      if (!ok) return null;
+    }
+    return url;
+  }
+
+  function showShareDialog(url) {
+    var dialog = document.getElementById('shareDialog');
+    document.getElementById('shareUrl').value = url;
+    dialog.hidden = false;
+  }
+
+  function hideShareDialog() {
+    document.getElementById('shareDialog').hidden = true;
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+      document.body.removeChild(ta);
+    });
+  }
+
+  function checkShareHash() {
+    var hash = location.hash || '';
+    if (hash.indexOf('#share=') !== 0) return false;
+    try {
+      var encoded = hash.slice(7);
+      var payload = decodeSharePayload(encoded);
+      if (!payload || !Array.isArray(payload.r)) return false;
+      sharedRecords = payload.r.map(function (s) {
+        return {
+          id: 'share_' + uid(),
+          date: s.d,
+          time: s.t || '00:00',
+          glucose: s.g != null && isFinite(s.g) ? s.g : null,
+          uric: s.u != null && isFinite(s.u) ? s.u : null,
+          gtype: s.y || '空腹',
+          note: s.n || '',
+          imageId: null,
+          imageName: '',
+          createdAt: 0
+        };
+      }).filter(function (r) {
+        return r.date && (r.glucose != null || r.uric != null);
+      });
+      if (!sharedRecords.length) return false;
+      sharedOwner = payload.n || '';
+      shareMode = true;
+      return true;
+    } catch (e) {
+      console.warn('分享链接解析失败', e);
+      return false;
+    }
+  }
+
+  function enterShareMode() {
+    document.body.classList.add('share-mode');
+    var banner = document.getElementById('shareBanner');
+    banner.hidden = false;
+    var ownerText = sharedOwner ? sharedOwner + ' 分享的记录' : '分享的记录';
+    document.getElementById('shareBannerTitle').textContent = ownerText;
+    document.getElementById('shareBannerSub').textContent = '共 ' + sharedRecords.length + ' 条 · 只读查看';
+    // 补一下页面标题
+    document.title = ownerText + ' · 血糖 · 尿酸';
+  }
+
+  function exitShareMode() {
+    location.hash = '';
+    // 用 replace 方式避免留在历史记录里
+    location.replace(location.href.split('#')[0]);
+  }
+
+  function saveSharedToLocal() {
+    if (!sharedRecords.length) return;
+    var ok = confirm('把 ' + sharedRecords.length + ' 条分享记录保存到本机？\n\n重复的记录会自动跳过。\n注意：分享数据不含图片。');
+    if (!ok) return;
+
+    var merged = 0, skipped = 0;
+    var seen = {};
+    records.forEach(function (r) {
+      seen[r.date + '|' + r.time + '|' + r.glucose + '|' + r.uric] = true;
+    });
+    sharedRecords.forEach(function (r) {
+      var key = r.date + '|' + r.time + '|' + r.glucose + '|' + r.uric;
+      if (seen[key]) { skipped++; return; }
+      records.push({
+        id: uid(),
+        date: r.date,
+        time: r.time,
+        glucose: r.glucose,
+        uric: r.uric,
+        gtype: r.gtype,
+        note: r.note,
+        imageId: null,
+        imageName: '',
+        createdAt: Date.now()
+      });
+      seen[key] = true;
+      merged++;
+    });
+    persist();
+    toast('已保存：新增 ' + merged + ' 条，跳过 ' + skipped + ' 条');
+    setTimeout(function () {
+      exitShareMode();
+    }, 800);
+  }
+
+  /* ---------- 导入 ---------- */
+
+  function parseCSVLine(line) {
+    var out = [], cur = '', inQ = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (inQ) {
+        if (c === '"') {
+          if (line[i + 1] === '"') { cur += '"'; i++; } else { inQ = false; }
+        } else { cur += c; }
+      } else {
+        if (c === '"') inQ = true;
+        else if (c === ',') { out.push(cur); cur = ''; }
+        else cur += c;
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+
+  function normalizeRecord(r) {
+    if (!r || typeof r !== 'object') return null;
+
+    var date = normDate(r.date || r['日期']);
+    if (!date) return null;
+
+    var time = normTime(r.time || r['时间']);
+    var glucose = numOrNull(r.glucose != null ? r.glucose : (r['血糖'] != null ? r['血糖'] : r['血糖(mmol/L)']));
+    var uric = numOrNull(r.uric != null ? r.uric : (r['尿酸'] != null ? r['尿酸'] : r['尿酸(μmol/L)']));
+
+    if (glucose != null && (glucose <= 0 || glucose > 50)) glucose = null;
+    if (uric != null && (uric <= 0 || uric > 2000)) uric = null;
+    if (glucose == null && uric == null) return null;
+
+    var gtype = String(r.gtype || r['血糖时段'] || r['测量时段'] || '空腹').trim() || '空腹';
+    var note = String(r.note || r['备注'] || '').trim();
+
+    var rec = {
+      id: r.id || uid(),
+      date: date, time: time, glucose: glucose, uric: uric,
+      gtype: gtype, note: note,
+      imageId: r.imageId || null,
+      imageName: r.imageName || '',
+      createdAt: r.createdAt || Date.now()
+    };
+
+    if (typeof r.image === 'string' && r.image.indexOf('data:image/') === 0) {
+      rec._imageData = r.image;
+      rec._imageName = r.imageName || '图片';
+    }
+
+    return rec;
+  }
+
+  function parseJSONImport(text) {
+    var data = JSON.parse(text);
+    var arr = Array.isArray(data) ? data : (data.records || data.data || []);
+    if (!Array.isArray(arr)) throw new Error('文件结构不正确');
+    var out = [];
+    arr.forEach(function (item) {
+      var rec = normalizeRecord(item);
+      if (rec) out.push(rec);
+    });
+    return out;
+  }
+
+  function parseCSVImport(text) {
+    var lines = text.replace(/^\ufeff/, '').split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
+    if (lines.length < 2) return [];
+    var header = parseCSVLine(lines[0]).map(function (h) { return h.trim(); });
+    var out = [];
+    for (var i = 1; i < lines.length; i++) {
+      var cells = parseCSVLine(lines[i]);
+      var obj = {};
+      for (var j = 0; j < header.length; j++) {
+        obj[header[j]] = cells[j] != null ? String(cells[j]).trim() : '';
+      }
+      var rec = normalizeRecord(obj);
+      if (rec) out.push(rec);
+    }
+    return out;
+  }
+
+  function mergeRecords(incoming) {
+    var added = 0, skipped = 0;
+    var addedList = [];
+    var seenId = {}, seenSig = {};
+
+    function sig(r) {
+      return [r.date, r.time, r.glucose, r.uric, r.gtype, r.note].join('|');
+    }
+
+    records.forEach(function (r) {
+      seenId[r.id] = 1;
+      seenSig[sig(r)] = 1;
+    });
+
+    incoming.forEach(function (r) {
+      if (seenId[r.id] || seenSig[sig(r)]) { skipped++; return; }
+      records.push(r);
+      seenId[r.id] = 1;
+      seenSig[sig(r)] = 1;
+      addedList.push(r);
+      added++;
+    });
+
+    return { added: added, skipped: skipped, addedList: addedList };
+  }
+
+  async function processImportedImages(list) {
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i];
+      if (!r._imageData) {
+        delete r._imageData;
+        delete r._imageName;
+        continue;
+      }
+      try {
+        var blob = dataURLToBlob(r._imageData);
+        if (blob && blob.size > 0) {
+          var id = uid();
+          var name = r._imageName || '图片';
+          await idbPut(id, { blob: blob, name: name, type: blob.type || 'image/jpeg', addedAt: Date.now() });
+          r.imageId = id;
+          r.imageName = name;
+        }
+      } catch (err) {
+        console.warn('导入图片失败：', err);
+      }
+      delete r._imageData;
+      delete r._imageName;
+    }
+  }
+
+  function handleImport(e) {
+    if (shareMode) { alert('分享查看模式下不能导入'); e.target.value = ''; return; }
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var text = String(reader.result || '').replace(/^\ufeff/, '');
+        var trimmed = text.trim();
+        var incoming;
+
+        if (/\.json$/i.test(file.name) || trimmed.charAt(0) === '{' || trimmed.charAt(0) === '[') {
+          incoming = parseJSONImport(text);
+        } else {
+          incoming = parseCSVImport(text);
+        }
+
+        if (!incoming.length) {
+          alert('没有解析到有效记录，请检查文件内容。');
+          e.target.value = '';
+          return;
+        }
+
+        var res = mergeRecords(incoming);
+
+        processImportedImages(res.addedList).then(function () {
+          persist();
+          resetTrendView();
+          renderAll();
+          alert('导入完成：新增 ' + res.added + ' 条，跳过重复 ' + res.skipped + ' 条。');
+        }).catch(function (err) {
+          persist();
+          renderAll();
+          alert('记录已导入，但部分图片处理失败：' + err.message);
+        });
+      } catch (err) {
+        alert('导入失败：' + err.message);
+      } finally {
+        e.target.value = '';
+      }
+    };
+    reader.onerror = function () {
+      alert('读取文件失败');
+      e.target.value = '';
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  /* ---------- 图片查看器 ---------- */
+
+  function openImageViewer(src, caption) {
+    var viewer = document.getElementById('imgViewer');
+    document.getElementById('imgViewerImg').src = src;
+    document.getElementById('imgViewerCaption').textContent = caption || '';
+    viewer.hidden = false;
+  }
+
+  function closeImageViewer() {
+    var viewer = document.getElementById('imgViewer');
+    viewer.hidden = true;
+    document.getElementById('imgViewerImg').removeAttribute('src');
+  }
+
+  /* ---------- 总渲染 ---------- */
+
+  function renderAll() {
+    renderStats();
+    renderList();
+    if (!shareMode) renderToday();
+    drawChart();
+  }
+
+  /* ---------- PWA ---------- */
+
+  function initPWA() {
+    var offlineBar = document.getElementById('offlineBar');
+    function updateOnline() {
+      if (!offlineBar) return;
+      offlineBar.hidden = navigator.onLine;
+    }
+    window.addEventListener('online', updateOnline);
+    window.addEventListener('offline', updateOnline);
+    updateOnline();
+
+    var installCard = document.getElementById('installCard');
+    var installBtn = document.getElementById('installBtn');
+    var iosHint = document.getElementById('iosHint');
+    var installTip = document.getElementById('installTip');
+
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+    if (!isStandalone && isIOS) {
+      installCard.hidden = false;
+      installBtn.hidden = true;
+      installTip.hidden = true;
+      iosHint.hidden = false;
+    }
+
+    var deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!isStandalone) {
+        installCard.hidden = false;
+        installBtn.hidden = false;
+        iosHint.hidden = true;
+        installTip.hidden = false;
+      }
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', function () {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function (res) {
+          deferredPrompt = null;
+          installCard.hidden = true;
+          if (res && res.outcome === 'accepted') toast('已添加到主屏幕');
+        });
+      });
+    }
+
+    window.addEventListener('appinstalled', function () {
+      deferredPrompt = null;
+      installCard.hidden = true;
+      toast('安装成功');
+    });
+
+    if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+
+    var hadController = !!navigator.serviceWorker.controller;
+    var refreshing = false;
+
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController || refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function (reg) {
+        var updateBar = document.getElementById('updateBar');
+        var updateBtn = document.getElementById('updateBtn');
+
+        function showUpdate(worker) {
+          if (!updateBar || !worker) return;
+          updateBar.hidden = false;
+          updateBtn.onclick = function () {
+            worker.postMessage({ type: 'SKIP_WAITING' });
+            updateBar.hidden = true;
+          };
+        }
+
+        if (reg.waiting && navigator.serviceWorker.controller) showUpdate(reg.waiting);
+
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdate(nw);
+          });
+        });
+
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'visible') reg.update().catch(function () {});
+        });
+      }).catch(function (err) {
+        console.warn('Service Worker 注册失败：', err);
+      });
+    });
+  }
+
+  /* ---------- 初始化 ---------- */
+
+  function init() {
+    load();
+
+    // 先检查分享链接
+    var isShare = checkShareHash();
+
+    $('#date').value = todayStr();
+    $('#time').value = nowTime();
+
+    // 名字输入框
+    var ownerInput = $('#ownerName');
+    if (ownerInput) ownerInput.value = getOwnerName();
+
+    $('#recordForm').addEventListener('submit', handleSubmit);
+    $('#cancelEdit').addEventListener('click', cancelEdit);
+    $('#rangeFilter').addEventListener('change', renderList);
+
+    $('#trendRange').value = String(trendRange);
+    $('#trendRange').addEventListener('change', function () {
+      trendRange = Number(this.value) || 0;
+      resetTrendView();
+      drawChart();
+    });
+
+    // 我的名字
+    var saveOwnerBtn = $('#saveOwnerName');
+    if (saveOwnerBtn) {
+      saveOwnerBtn.addEventListener('click', function () {
+        var name = ownerInput.value.trim();
+        setOwnerName(name);
+        toast(name ? '已保存：' + name : '已清除名字');
+      });
+    }
+
+    // 分享按钮
+    var shareBtn = $('#shareBtn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', function () {
+        var url = generateShareLink();
+        if (url) showShareDialog(url);
+      });
+    }
+
+    // 分享弹窗
+    var shareCopyBtn = $('#shareCopy');
+    if (shareCopyBtn) {
+      shareCopyBtn.addEventListener('click', function () {
+        var ta = document.getElementById('shareUrl');
+        var text = ta.value;
+        ta.select();
+        copyToClipboard(text).then(function () {
+          toast('链接已复制，粘贴到微信发送');
+          shareCopyBtn.textContent = '已复制';
+          setTimeout(function () { shareCopyBtn.textContent = '复制链接'; }, 1600);
+        }).catch(function () {
+          toast('请手动长按选中复制');
+        });
+      });
+    }
+    var shareCloseBtn = $('#shareClose');
+    if (shareCloseBtn) shareCloseBtn.addEventListener('click', hideShareDialog);
+    var shareDialog = document.getElementById('shareDialog');
+    if (shareDialog) {
+      shareDialog.addEventListener('click', function (e) {
+        if (e.target === shareDialog) hideShareDialog();
+      });
+    }
+
+    // 分享模式横幅按钮
+    var shareSaveBtn = $('#shareSaveLocal');
+    if (shareSaveBtn) shareSaveBtn.addEventListener('click', saveSharedToLocal);
+    var shareExitBtn = $('#shareExit');
+    if (shareExitBtn) shareExitBtn.addEventListener('click', exitShareMode);
+
+    // 图片选择
+    $('#imageInput').addEventListener('change', function (e) {
+      if (shareMode) { e.target.value = ''; return; }
+      var file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (!file) return;
+      if (!/^image\//.test(file.type)) { alert('请选择图片文件'); return; }
+      if (file.size > 25 * 1024 * 1024) { alert('图片太大，请选择 25MB 以内的图片'); return; }
+      toast('正在处理图片…');
+      compressImage(file, 1280, 0.78).then(function (blob) {
+        pendingImage = { blob: blob, name: file.name || ('图片_' + Date.now() + '.jpg') };
+        pendingImageRemoved = false;
+        showPreview(blob, pendingImage.name);
+        toast('图片已添加');
+      }).catch(function (err) {
+        alert('图片处理失败：' + err.message);
+      });
+    });
+
+    $('#removeImage').addEventListener('click', function () {
+      pendingImage = null;
+      if (editingId) pendingImageRemoved = true;
+      hidePreview();
+      toast('已移除图片');
+    });
+
+    $('#tabbar').addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-view]') : null;
+      if (b) {
+        var v = b.getAttribute('data-view');
+        showView(v);
+        if (v === 'entry' || v === 'history') {
+          setTimeout(function () { hydrateImages(); }, 30);
+        }
+      }
+    });
+
+    // 记录操作
+    document.addEventListener('click', function (e) {
+      if (shareMode) return;
+      var btn = e.target.closest ? e.target.closest('button[data-act]') : null;
+      if (!btn) return;
+      var id = btn.getAttribute('data-id');
+      var act = btn.getAttribute('data-act');
+
+      if (act === 'del') {
+        var r = records.filter(function (x) { return x.id === id; })[0];
+        if (!r) return;
+        if (!confirm('确定删除 ' + r.date + ' ' + (r.time || '') + ' 这条记录吗？')) return;
+        if (r.imageId) {
+          idbDelete(r.imageId).catch(function () {});
+          revokeImgUrl(r.imageId);
+        }
+        records = records.filter(function (x) { return x.id !== id; });
+        if (editingId === id) cancelEdit();
+        persist();
+        renderAll();
+        toast('已删除');
+      } else if (act === 'edit') {
+        startEdit(id);
+      }
+    });
+
+    // 点击图片打开查看器
+    document.addEventListener('click', function (e) {
+      var target = e.target;
+      if (!target || !target.closest) return;
+      var recImg = target.closest('img[data-img-id]');
+      if (recImg && recImg.src) {
+        openImageViewer(recImg.src, recImg.alt);
+        return;
+      }
+      var tipImg = target.closest('.tip-img');
+      if (tipImg && tipImg.src) {
+        openImageViewer(tipImg.src, tipImg.alt);
+        return;
+      }
+    });
+
+    document.getElementById('imgViewerClose').addEventListener('click', closeImageViewer);
+    document.getElementById('imgViewer').addEventListener('click', function (e) {
+      if (e.target === this) closeImageViewer();
+    });
+
+    $('#metricSeg').addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-metric]') : null;
+      if (!b) return;
+      metric = b.getAttribute('data-metric');
+      $$('#metricSeg button').forEach(function (x) { x.classList.toggle('active', x === b); });
+      resetTrendView();
+      drawChart();
+    });
+
+    $('#exportJson').addEventListener('click', function () {
+      exportJSON().catch(function (err) { alert('导出失败：' + err.message); });
+    });
+    $('#exportCsv').addEventListener('click', exportCSV);
+    $('#importFile').addEventListener('change', handleImport);
+
+    $('#clearAll').addEventListener('click', function () {
+      if (shareMode) { alert('分享查看模式下不能清空'); return; }
+      if (!records.length) { alert('当前没有记录'); return; }
+      if (!confirm('确定清空全部 ' + records.length + ' 条记录吗？\n此操作无法撤销，建议先导出备份。')) return;
+      records = [];
+      cancelEdit();
+      persist();
+      Object.keys(imgUrlCache).forEach(revokeImgUrl);
+      imgUrlCache = {};
+      idbClear().catch(function () {});
+      resetTrendView();
+      renderAll();
+      toast('已清空');
+    });
+
+    var rt = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt);
+      rt = setTimeout(function () { hideTip(); drawChart(); }, 160);
+    });
+
+    initChartEvents();
+    initPWA();
+
+    if (isShare) {
+      enterShareMode();
+      renderAll();
+      // 分享模式默认展示趋势
+      showView('trend', true);
+      setTimeout(drawChart, 60);
+    } else {
+      renderAll();
+      showView('entry', true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
