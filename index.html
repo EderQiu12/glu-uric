@@ -29,7 +29,6 @@ body{
 }
 .app{max-width:760px;margin:0 auto;padding:0 14px}
 
-/* 状态条 */
 .status-bar{
   position:fixed;left:0;right:0;top:0;z-index:80;
   background:#b45309;color:#fff;font-size:14px;text-align:center;
@@ -87,7 +86,6 @@ input:focus,select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 @media(max-width:400px){.grid2{grid-template-columns:1fr}}
 
-/* 图片备注 */
 .image-field{margin-bottom:12px}
 .image-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .img-add{
@@ -107,7 +105,6 @@ input:focus,select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3
   display:flex;align-items:center;justify-content:center;padding:0;
 }
 
-/* 按钮 */
 .btn{
   font-family:inherit;font-size:17px;font-weight:600;min-height:54px;padding:0 18px;width:100%;
   border-radius:13px;border:1.5px solid var(--line);background:#fff;color:var(--txt);
@@ -142,9 +139,9 @@ input:focus,select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3
   border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--txt);
 }
 
-/* 图表 */
 .chart-wrap{width:100%;height:230px;position:relative;touch-action:pan-y}
 canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
+
 .chart-tip{
   position:absolute;z-index:20;pointer-events:none;
   background:rgba(23,33,48,.96);color:#fff;border-radius:12px;
@@ -162,6 +159,15 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   font-size:12px;color:#cbd5e1;margin-top:6px;white-space:normal;
   line-height:1.45;max-width:230px;word-break:break-word;
 }
+/* 浮层里的图片缩略图：单独允许点击 */
+.chart-tip .tip-img-wrap{
+  margin-top:8px;pointer-events:auto;cursor:zoom-in;display:block;
+}
+.chart-tip .tip-img{
+  width:140px;height:105px;object-fit:cover;display:block;
+  border-radius:8px;border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+}
 
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:4px}
@@ -171,7 +177,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 .gesture-hint{font-size:12px;color:var(--muted);line-height:1.4}
 .ref-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}
 
-/* 记录 */
 .day-title{font-size:14px;color:var(--muted);font-weight:600;margin:16px 0 8px}
 .day-title:first-child{margin-top:0}
 .rec{border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:10px;background:#fff}
@@ -196,7 +201,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 .rec-img{width:88px;height:88px;object-fit:cover;border-radius:10px;border:1px solid var(--line);
   background:#f1f5fa;cursor:zoom-in;display:block}
 
-/* 图片查看器 */
 .img-viewer{
   position:fixed;inset:0;z-index:120;background:rgba(8,12,20,.95);
   display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;
@@ -272,7 +276,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
   <main>
 
-    <!-- 记录 -->
     <section id="view-entry" class="view active">
       <div class="card">
         <h2 id="formTitle">记一次</h2>
@@ -333,7 +336,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       </div>
     </section>
 
-    <!-- 历史 -->
     <section id="view-history" class="view">
       <div class="card">
         <div class="card-head">
@@ -351,7 +353,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       </div>
     </section>
 
-    <!-- 趋势 -->
     <section id="view-trend" class="view">
       <div class="stats" id="stats"></div>
       <div class="card">
@@ -386,14 +387,13 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
           绿色带为常见参考范围：血糖 3.9–7.8 mmol/L（空腹宜 ≤6.1，餐后 2 小时宜 &lt;7.8）；尿酸 208–420 μmol/L。仅供参考，请以医生建议为准。
         </p>
         <div class="chart-tools">
-          <span class="gesture-hint">双指捏合 / 滚轮缩放 · 左右拖动平移 · 点击数据点查看数值和备注</span>
+          <span class="gesture-hint">双指捏合 / 滚轮缩放 · 左右拖动平移 · 点击数据点查看数值、备注和图片</span>
           <button type="button" class="mini" id="resetZoom">重置缩放</button>
         </div>
         <p class="tip" id="chartHint"></p>
       </div>
     </section>
 
-    <!-- 数据 -->
     <section id="view-data" class="view">
 
       <div class="card" id="installCard" hidden>
@@ -430,7 +430,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   </main>
 </div>
 
-<!-- 图片查看器 -->
 <div id="imgViewer" class="img-viewer" hidden>
   <button type="button" id="imgViewerClose" class="img-viewer-close" aria-label="关闭">×</button>
   <img id="imgViewerImg" alt="图片备注">
@@ -456,11 +455,10 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   var MIN_SPAN = 3;
   var MAX_RAW = 80;
 
-  // 图片状态
-  var pendingImage = null;          // { blob, name }
+  var pendingImage = null;
   var pendingImageRemoved = false;
   var previewUrl = null;
-  var imgUrlCache = {};             // imageId -> objectURL
+  var imgUrlCache = {};
   var imgLoading = {};
 
   var $ = function (s) { return document.querySelector(s); };
@@ -535,7 +533,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     toastTimer = setTimeout(function () { el.classList.remove('show'); }, 1700);
   }
 
-  /* ---------- IndexedDB 图片存储 ---------- */
+  /* ---------- IndexedDB ---------- */
 
   var DB_NAME = 'glu_uric_db_v1';
   var DB_STORE = 'images';
@@ -661,6 +659,25 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     }
   }
 
+  // 为某个 imageId 拿到 objectURL（带缓存和去重）
+  function getImgUrl(imageId) {
+    if (!imageId) return Promise.resolve('');
+    if (imgUrlCache[imageId]) return Promise.resolve(imgUrlCache[imageId]);
+    if (imgLoading[imageId]) return imgLoading[imageId];
+    var p = idbGet(imageId).then(function (v) {
+      imgLoading[imageId] = null;
+      if (!v || !v.blob) return '';
+      var url = URL.createObjectURL(v.blob);
+      imgUrlCache[imageId] = url;
+      return url;
+    }).catch(function () {
+      imgLoading[imageId] = null;
+      return '';
+    });
+    imgLoading[imageId] = p;
+    return p;
+  }
+
   /* ---------- 健康分级 ---------- */
 
   var LEVEL_LABEL = { low: '偏低', ok: '正常', warn: '偏高', high: '高', severe: '严重' };
@@ -726,7 +743,33 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     if (!noScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /* ---------- 渲染 ---------- */
+  /* ---------- 图片渲染（页面里的缩略图） ---------- */
+
+  // 处理页面中所有 img[data-img-id]，填充 src
+  function hydrateImages(root) {
+    var scope = root || document;
+    var imgs = scope.querySelectorAll('img[data-img-id]');
+    Array.prototype.forEach.call(imgs, function (el) {
+      var id = el.getAttribute('data-img-id');
+      if (!id) return;
+
+      if (imgUrlCache[id]) {
+        if (el.src !== imgUrlCache[id]) el.src = imgUrlCache[id];
+        return;
+      }
+
+      getImgUrl(id).then(function (url) {
+        if (!url) {
+          var wrap = el.parentElement;
+          if (wrap && wrap.classList.contains('rec-img-wrap')) wrap.hidden = true;
+          return;
+        }
+        if (el.getAttribute('data-img-id') === id) el.src = url;
+      });
+    });
+  }
+
+  /* ---------- 渲染列表 ---------- */
 
   function recHTML(r) {
     var gLv = glucoseLevel(r.glucose, r.gtype);
@@ -768,36 +811,13 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     '</div>';
   }
 
-  function hydrateImages() {
-    var imgs = document.querySelectorAll('img[data-img-id]');
-    Array.prototype.forEach.call(imgs, function (el) {
-      var id = el.getAttribute('data-img-id');
-      if (!id) return;
-      if (imgUrlCache[id]) { el.src = imgUrlCache[id]; return; }
-      if (imgLoading[id]) return;
-      imgLoading[id] = true;
-      idbGet(id).then(function (v) {
-        imgLoading[id] = false;
-        if (!v || !v.blob) {
-          var wrap = el.parentElement;
-          if (wrap) wrap.hidden = true;
-          return;
-        }
-        var url = URL.createObjectURL(v.blob);
-        imgUrlCache[id] = url;
-        el.src = url;
-      }).catch(function () {
-        imgLoading[id] = false;
-      });
-    });
-  }
-
   function renderToday() {
     var t = todayStr();
     var items = records.filter(function (r) { return r.date === t; })
       .sort(function (a, b) { return (b.time || '').localeCompare(a.time || ''); });
     var el = $('#todayList');
     el.innerHTML = items.length ? items.map(recHTML).join('') : '<p class="empty">今天还没有记录</p>';
+    hydrateImages(el);   // ← 关键修复：渲染后立刻加载图片
   }
 
   function renderList() {
@@ -835,6 +855,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       map[date].forEach(function (r) { html += recHTML(r); });
     });
     list.innerHTML = html;
+    hydrateImages(list);  // ← 关键修复：筛选/渲染后立刻加载图片
   }
 
   function renderStats() {
@@ -871,7 +892,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         (lastU ? '<span class="lvl">' + badgeHTML(uLv) + '</span>' : '') + '</div></div>';
   }
 
-  /* ---------- 趋势数据 ---------- */
+  /* ---------- 趋势数据（带图片） ---------- */
 
   function buildPoints(key) {
     var arr = records.slice();
@@ -891,7 +912,10 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         points: withKey.map(function (r) {
           return {
             date: r.date, time: r.time, glucose: r.glucose,
-            uric: r.uric, gtype: r.gtype, note: r.note || '', _count: 1
+            uric: r.uric, gtype: r.gtype, note: r.note || '',
+            imageId: r.imageId || null,
+            imageName: r.imageName || '',
+            _count: 1
           };
         }),
         aggregated: false,
@@ -932,6 +956,19 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         if (n && noteSet.indexOf(n) < 0) noteSet.push(n);
       });
       p.note = noteSet.join('；').slice(0, 80);
+
+      // 找当天最后一条带图片的记录，聚合点也带图
+      var imgRec = null;
+      for (var i = list.length - 1; i >= 0; i--) {
+        if (list[i].imageId) { imgRec = list[i]; break; }
+      }
+      if (imgRec) {
+        p.imageId = imgRec.imageId;
+        p.imageName = imgRec.imageName || '';
+      } else {
+        p.imageId = null;
+        p.imageName = '';
+      }
 
       if (otherByDay[d]) {
         var ol = otherByDay[d];
@@ -986,8 +1023,32 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       html += '<div class="tip-note">备注：' + esc(p.note) + '</div>';
     }
 
+    // 图片缩略图（有图才显示）
+    var imgUrl = p.imageId ? (imgUrlCache[p.imageId] || '') : '';
+    if (p.imageId) {
+      html += '<div class="tip-img-wrap">' +
+        '<img class="tip-img" data-tip-img-id="' + esc(p.imageId) + '"' +
+        (imgUrl ? ' src="' + imgUrl + '"' : '') +
+        ' alt="' + esc(p.imageName || '图片备注') + '">' +
+        '</div>';
+    }
+
     tip.innerHTML = html;
     tip.hidden = false;
+
+    // 若图片尚未缓存，异步加载后填入（不重建整个浮层）
+    if (p.imageId && !imgUrl) {
+      var wantId = p.imageId;
+      getImgUrl(wantId).then(function (url) {
+        if (!url) {
+          var curWrap = tip.querySelector('.tip-img-wrap');
+          if (curWrap && tip.querySelector('img[data-tip-img-id="' + wantId + '"]')) curWrap.hidden = true;
+          return;
+        }
+        var cur = tip.querySelector('img[data-tip-img-id="' + wantId + '"]');
+        if (cur) cur.src = url;
+      });
+    }
 
     var tw = tip.offsetWidth;
     var th = tip.offsetHeight;
@@ -1092,7 +1153,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       return padT + ch - ((v - mn) / (mx - mn)) * ch;
     }
 
-    // 网格
     ctx.strokeStyle = '#eef2f7';
     ctx.lineWidth = 1;
     ctx.fillStyle = '#a3adbb';
@@ -1109,7 +1169,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       ctx.fillText(fnum(vv, dec), padL - 8, yy);
     }
 
-    // 参考范围带
     var refBand = key === 'glucose' ? { lo: 3.9, hi: 7.8 } : { lo: 208, hi: 420 };
     var bandTop = Math.max(padT, y(refBand.hi));
     var bandBot = Math.min(padT + ch, y(refBand.lo));
@@ -1138,7 +1197,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       ctx.fillText('参考范围', padL + 4, bandTop + 3);
     }
 
-    // 裁剪绘图区
     ctx.save();
     ctx.beginPath();
     ctx.rect(padL, 0, cw, H);
@@ -1896,7 +1954,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     renderList();
     renderToday();
     drawChart();
-    hydrateImages();
   }
 
   /* ---------- PWA ---------- */
@@ -2020,7 +2077,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       drawChart();
     });
 
-    // 图片选择
     $('#imageInput').addEventListener('change', function (e) {
       var file = e.target.files && e.target.files[0];
       e.target.value = '';
@@ -2047,7 +2103,14 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
     $('#tabbar').addEventListener('click', function (e) {
       var b = e.target.closest ? e.target.closest('button[data-view]') : null;
-      if (b) showView(b.getAttribute('data-view'));
+      if (b) {
+        var v = b.getAttribute('data-view');
+        showView(v);
+        // 切换到记录/历史时补一次图片加载，避免慢加载
+        if (v === 'entry' || v === 'history') {
+          setTimeout(function () { hydrateImages(); }, 30);
+        }
+      }
     });
 
     // 记录操作
@@ -2075,11 +2138,22 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       }
     });
 
-    // 点击记录缩略图查看大图
+    // 点击图片（记录缩略图 / 浮层缩略图）打开查看器
     document.addEventListener('click', function (e) {
-      var img = e.target.closest ? e.target.closest('img[data-img-id]') : null;
-      if (!img || !img.src) return;
-      openImageViewer(img.src, img.alt);
+      var target = e.target;
+      if (!target || !target.closest) return;
+
+      var recImg = target.closest('img[data-img-id]');
+      if (recImg && recImg.src) {
+        openImageViewer(recImg.src, recImg.alt);
+        return;
+      }
+
+      var tipImg = target.closest('.tip-img');
+      if (tipImg && tipImg.src) {
+        openImageViewer(tipImg.src, tipImg.alt);
+        return;
+      }
     });
 
     document.getElementById('imgViewerClose').addEventListener('click', closeImageViewer);

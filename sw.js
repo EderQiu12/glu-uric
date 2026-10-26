@@ -1,5 +1,5 @@
 /* 血糖 · 尿酸 记录本 Service Worker */
-const CACHE = 'glu-uric-v2';
+const CACHE = 'glu-uric-v3';
 const ASSETS = [
   './',
   './index.html',
