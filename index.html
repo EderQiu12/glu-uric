@@ -91,15 +91,15 @@ body.share-mode .nav-data{display:none}
 .topbar h1{margin:0;font-size:20px;letter-spacing:.3px}
 .topbar p{margin:4px 0 0;font-size:13px;color:var(--muted)}
 
-/* 操作栏：取消左、保存右 */
+/* 操作栏：只在编辑时出现，取消靠右 */
 .action-bar{
   display:flex;
   align-items:center;
+  justify-content:flex-end;
   gap:10px;
   padding:8px 0 10px;
 }
 .action-bar[hidden]{display:none}
-.action-bar #submitBtn{margin-left:auto}
 .action-bar .btn-inline{min-height:42px;padding:0 18px;font-size:15px}
 
 .tabbar{
@@ -163,6 +163,10 @@ input[readonly]{cursor:pointer}
   border:0;background:rgba(0,0,0,.62);color:#fff;font-size:16px;line-height:1;cursor:pointer;
   display:flex;align-items:center;justify-content:center;padding:0;
 }
+
+/* 保存按钮：图片备注下方，单独一行 */
+.save-row{margin-top:4px}
+.save-row .btn{min-height:54px;font-size:17px}
 
 .btn{
   font-family:inherit;font-size:17px;font-weight:600;min-height:54px;padding:0 18px;width:100%;
@@ -409,9 +413,8 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       <h1>血糖 · 尿酸 记录本</h1>
       <p>数据只保存在本机，离线也能用</p>
     </header>
-    <div class="action-bar" id="entryActions">
-      <button type="button" class="btn ghost btn-inline" id="cancelEdit" hidden>取消修改</button>
-      <button type="submit" form="recordForm" class="btn primary btn-inline" id="submitBtn">保存</button>
+    <div class="action-bar" id="entryActions" hidden>
+      <button type="button" class="btn ghost btn-inline" id="cancelEdit">取消修改</button>
     </div>
   </div>
 
@@ -484,6 +487,11 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
               </div>
             </div>
             <p class="tip" id="imageTip">图片会压缩后保存在本机，不会上传；可拍照或从相册选择。</p>
+          </div>
+
+          <!-- 保存按钮：位于图片备注下方 -->
+          <div class="save-row">
+            <button type="submit" form="recordForm" class="btn primary" id="submitBtn">保存</button>
           </div>
         </form>
       </div>
@@ -1164,8 +1172,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   function updateActionBar(v) {
     var bar = document.getElementById('entryActions');
     if (!bar) return;
-    if (shareMode) { bar.hidden = true; return; }
-    bar.hidden = (v !== 'entry');
+    bar.hidden = !(v === 'entry' && !shareMode && !!editingId);
   }
 
   function showView(v, noScroll) {
@@ -2052,7 +2059,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         editingId = null;
         $('#formTitle').textContent = '记一次';
         $('#submitBtn').textContent = '保存';
-        $('#cancelEdit').hidden = true;
+        $('#entryActions').hidden = true;
         toast('已保存修改');
       } else {
         records.push({
@@ -2092,7 +2099,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     $('#note').value = r.note || '';
     $('#formTitle').textContent = '修改记录';
     $('#submitBtn').textContent = '保存修改';
-    $('#cancelEdit').hidden = false;
+    $('#entryActions').hidden = false;
 
     if (r.imageId) {
       idbGet(r.imageId).then(function (v) {
@@ -2108,7 +2115,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     editingId = null;
     $('#formTitle').textContent = '记一次';
     $('#submitBtn').textContent = '保存';
-    $('#cancelEdit').hidden = true;
+    $('#entryActions').hidden = true;
     $('#glucose').value = '';
     $('#uric').value = '';
     $('#note').value = '';
