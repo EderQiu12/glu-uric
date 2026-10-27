@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -48,7 +48,6 @@ body{
   border:0;background:#2563eb;color:#fff;cursor:pointer;flex-shrink:0;
 }
 
-/* 分享横幅 */
 .share-banner{
   position:sticky;top:10px;z-index:55;
   background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);
@@ -70,7 +69,6 @@ body{
 }
 .share-banner-actions .mini:active{background:rgba(255,255,255,.3)}
 
-/* 分享模式下隐藏记录和数据页 */
 body.share-mode .nav-entry,
 body.share-mode .nav-data{display:none}
 
@@ -109,8 +107,17 @@ input,select{
 }
 input::placeholder{color:#a9b3c1}
 input:focus,select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-@media(max-width:400px){.grid2{grid-template-columns:1fr}}
+input[readonly]{cursor:pointer}
+
+/* 血糖淡红、尿酸淡黄 */
+#glucose{background-color:#ffe8e8 !important;border-color:#f5b5b5}
+#uric{background-color:#fff8cc !important;border-color:#ecd97a}
+#glucose:focus,#uric:focus{box-shadow:0 0 0 3px rgba(37,99,235,.10)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.grid2 .field>span{font-size:13px}
+.grid2 input,.grid2 select{padding:10px 10px;font-size:16px;min-height:50px}
+@media(max-width:340px){.grid2{grid-template-columns:1fr}}
 
 .image-field{margin-bottom:12px}
 .image-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -142,6 +149,15 @@ input:focus,select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3
 .btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}
 .btn.ghost{background:#f6f9fd}
 .btn.danger{color:var(--bad);border-color:#f6cccc;background:#fff}
+
+.btn-inline{
+  width:auto;
+  min-height:44px;
+  padding:0 22px;
+  font-size:16px;
+  flex-shrink:0;
+}
+
 .btn-row{display:grid;gap:10px;margin-top:4px}
 @media(min-width:520px){.btn-row.two{grid-template-columns:1fr 1fr}}
 .file-btn{position:relative;overflow:hidden}
@@ -240,7 +256,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   color:#fff;font-size:26px;line-height:1;cursor:pointer;padding:0;
 }
 
-/* 分享弹窗 */
 .dialog{
   position:fixed;inset:0;z-index:140;
   background:rgba(8,12,20,.65);
@@ -263,6 +278,52 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 }
 .dialog-actions{display:flex;gap:10px;margin-top:14px}
 .dialog-actions .btn{flex:1;min-height:48px;font-size:16px}
+
+/* 数字键盘面板 */
+.numpad-overlay{
+  position:fixed;inset:0;z-index:135;background:rgba(8,12,20,.55);
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.numpad-overlay[hidden]{display:none}
+.numpad{
+  width:100%;max-width:520px;background:#fff;
+  border-radius:20px 20px 0 0;
+  padding:14px 14px calc(14px + env(safe-area-inset-bottom));
+  box-shadow:0 -10px 40px rgba(10,20,40,.25);
+  animation:numpad-in .2s ease-out;
+}
+@keyframes numpad-in{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
+.numpad-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.numpad-title{font-size:16px;font-weight:700}
+.numpad-close{width:36px;height:36px;border-radius:50%;border:0;background:#f1f5fa;color:#5a6675;font-size:20px;cursor:pointer;line-height:1}
+
+.numpad-display{
+  text-align:center;font-size:42px;font-weight:800;color:#182230;
+  padding:6px 0 8px;min-height:62px;line-height:1.1;
+  border-bottom:1px solid var(--line);margin-bottom:10px;
+  font-variant-numeric:tabular-nums;
+}
+.numpad-display .unit{font-size:13px;font-weight:500;color:var(--muted);margin-left:5px}
+.numpad-display.empty{color:#c3cddb}
+
+.numpad-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
+.numpad-quick button{
+  min-height:44px;border-radius:10px;border:1.5px solid var(--line);
+  background:#f8fafd;color:#435063;font-size:16px;font-weight:600;cursor:pointer;
+}
+.numpad-quick button.active{background:var(--pri-soft);border-color:var(--pri);color:var(--pri)}
+
+.numpad-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.numpad-keys button{
+  min-height:54px;border-radius:12px;border:0;background:#f1f5fa;
+  color:#182230;font-size:24px;font-weight:600;cursor:pointer;
+}
+.numpad-keys button:active{background:#e3e9f1}
+.numpad-keys button.func{background:#eef2f7;color:#5a6675;font-size:18px}
+
+.numpad-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:10px}
+.numpad-actions .btn{min-height:52px}
 
 .lv-low{color:var(--low)} .lv-ok{color:var(--ok)} .lv-warn{color:var(--warn)}
 .lv-high{color:var(--bad)} .lv-severe{color:var(--severe)}
@@ -298,6 +359,8 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   .chart-wrap{height:280px}
   .update-bar{bottom:20px;left:auto;right:20px;max-width:380px}
   .share-banner{top:0}
+  .numpad{max-width:440px;border-radius:20px;margin-bottom:20px}
+  .numpad-overlay{align-items:center}
 }
 </style>
 </head>
@@ -342,16 +405,26 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
     <section id="view-entry" class="view active">
       <div class="card">
-        <h2 id="formTitle">记一次</h2>
+        <div class="card-head">
+          <h2 id="formTitle">记一次</h2>
+          <button type="submit" form="recordForm" class="btn primary btn-inline" id="submitBtn">保存</button>
+        </div>
         <form id="recordForm" novalidate>
           <div class="grid2">
             <label class="field"><span>日期</span><input type="date" id="date" required></label>
             <label class="field"><span>时间</span><input type="time" id="time"></label>
           </div>
+
           <div class="grid2">
             <label class="field"><span>血糖（mmol/L）</span>
-              <input type="number" id="glucose" inputmode="decimal" step="0.1" min="0" max="50" placeholder="比如 6.2">
+              <input type="text" id="glucose" readonly inputmode="none" placeholder="点击输入">
             </label>
+            <label class="field"><span>尿酸（μmol/L）</span>
+              <input type="text" id="uric" readonly inputmode="none" placeholder="点击输入">
+            </label>
+          </div>
+
+          <div class="grid2">
             <label class="field"><span>测量时段</span>
               <select id="gtype">
                 <option>空腹</option>
@@ -360,11 +433,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
                 <option>睡前</option>
                 <option>随机</option>
               </select>
-            </label>
-          </div>
-          <div class="grid2">
-            <label class="field"><span>尿酸（μmol/L）</span>
-              <input type="number" id="uric" inputmode="decimal" step="1" min="0" max="2000" placeholder="比如 420">
             </label>
             <label class="field"><span>备注（选填）</span>
               <input type="text" id="note" maxlength="60" placeholder="比如 吃了面条">
@@ -386,11 +454,9 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
             <p class="tip" id="imageTip">图片会压缩后保存在本机，不会上传；可拍照或从相册选择。</p>
           </div>
 
-          <div class="btn-row two">
-            <button type="submit" class="btn primary" id="submitBtn">保存</button>
-            <button type="button" class="btn ghost" id="cancelEdit" hidden>取消修改</button>
+          <div class="btn-row" id="cancelRow" hidden>
+            <button type="button" class="btn ghost" id="cancelEdit">取消修改</button>
           </div>
-          <p class="tip">血糖和尿酸至少填一项。</p>
         </form>
       </div>
 
@@ -525,6 +591,35 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   </div>
 </div>
 
+<div id="numPadOverlay" class="numpad-overlay" hidden>
+  <div class="numpad">
+    <div class="numpad-head">
+      <span class="numpad-title" id="numPadTitle">血糖</span>
+      <button type="button" class="numpad-close" id="numPadClose" aria-label="关闭">×</button>
+    </div>
+    <div class="numpad-display empty" id="numPadDisplay">--</div>
+    <div class="numpad-quick" id="numPadQuick"></div>
+    <div class="numpad-keys" id="numPadKeys">
+      <button type="button" data-key="1">1</button>
+      <button type="button" data-key="2">2</button>
+      <button type="button" data-key="3">3</button>
+      <button type="button" data-key="4">4</button>
+      <button type="button" data-key="5">5</button>
+      <button type="button" data-key="6">6</button>
+      <button type="button" data-key="7">7</button>
+      <button type="button" data-key="8">8</button>
+      <button type="button" data-key="9">9</button>
+      <button type="button" data-key="." class="func" id="numPadDot">.</button>
+      <button type="button" data-key="0">0</button>
+      <button type="button" data-key="del" class="func">⌫</button>
+    </div>
+    <div class="numpad-actions">
+      <button type="button" class="btn" id="numPadCancel">取消</button>
+      <button type="button" class="btn primary" id="numPadOk">确定</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
   'use strict';
@@ -551,10 +646,15 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   var imgUrlCache = {};
   var imgLoading = {};
 
-  // 分享模式
   var shareMode = false;
   var sharedRecords = [];
   var sharedOwner = '';
+
+  // 数字键盘
+  var numPadTarget = null;
+  var numPadValue = '';
+  var numPadQuickMode = false;
+  var numPadQuickPressCount = 0;
 
   var $ = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
@@ -630,13 +730,210 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     toastTimer = setTimeout(function () { el.classList.remove('show'); }, 1700);
   }
 
-  /* ---------- owner 名字 ---------- */
-
   function getOwnerName() {
     try { return localStorage.getItem(OWNER_KEY) || ''; } catch (e) { return ''; }
   }
   function setOwnerName(name) {
     try { localStorage.setItem(OWNER_KEY, name); } catch (e) {}
+  }
+
+  /* ---------- 数字键盘 ---------- */
+
+  var NUMPAD_CONFIG = {
+    glucose: {
+      title: '血糖（mmol/L）',
+      unit: 'mmol/L',
+      maxLen: 4,
+      allowDecimal: true,
+      decMax: 1,
+      quick: ['4.0','5.0','6.0','7.0','8.0','9.0','10.0','11.0'],
+      min: 1, max: 50
+    },
+    uric: {
+      title: '尿酸（μmol/L）',
+      unit: 'μmol/L',
+      maxLen: 4,
+      allowDecimal: false,
+      decMax: 0,
+      quick: ['300','350','400','450','500','550','600','650'],
+      min: 1, max: 2000
+    }
+  };
+
+  function openNumPad(target) {
+    if (shareMode) return;
+    numPadTarget = target;
+    var cfg = NUMPAD_CONFIG[target];
+    if (!cfg) return;
+
+    var cur = $('#' + target).value;
+    numPadValue = cur ? String(cur) : '';
+    numPadQuickMode = false;
+    numPadQuickPressCount = 0;
+
+    $('#numPadTitle').textContent = cfg.title;
+    $('#numPadDot').style.visibility = cfg.allowDecimal ? 'visible' : 'hidden';
+
+    var quickEl = $('#numPadQuick');
+    quickEl.innerHTML = cfg.quick.map(function (q) {
+      var active = (String(q) === numPadValue) ? ' active' : '';
+      return '<button type="button" data-quick="' + q + '" class="' + active + '">' + q + '</button>';
+    }).join('');
+
+    renderNumPadDisplay();
+    $('#numPadOverlay').hidden = false;
+  }
+
+  function closeNumPad() {
+    $('#numPadOverlay').hidden = true;
+    numPadTarget = null;
+    numPadValue = '';
+    numPadQuickMode = false;
+    numPadQuickPressCount = 0;
+  }
+
+  function renderNumPadDisplay() {
+    if (!numPadTarget) return;
+    var cfg = NUMPAD_CONFIG[numPadTarget];
+    var el = $('#numPadDisplay');
+    if (numPadValue === '' || numPadValue === '.') {
+      el.innerHTML = '--<span class="unit">' + cfg.unit + '</span>';
+      el.classList.add('empty');
+    } else {
+      el.innerHTML = esc(numPadValue) + '<span class="unit">' + cfg.unit + '</span>';
+      el.classList.remove('empty');
+    }
+    $$('#numPadQuick button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-quick') === numPadValue);
+    });
+  }
+
+  function numPadInput(key) {
+    if (!numPadTarget) return;
+    var cfg = NUMPAD_CONFIG[numPadTarget];
+
+    // 快捷模式：数字键覆盖对应位
+    if (numPadQuickMode) {
+      if (key === 'del') {
+        numPadQuickMode = false;
+        numPadQuickPressCount = 0;
+        numPadValue = numPadValue.slice(0, -1);
+        renderNumPadDisplay();
+        return;
+      }
+      if (key === '.') {
+        return;
+      }
+      if (/^[0-9]$/.test(key)) {
+        if (numPadTarget === 'glucose') {
+          var dot = numPadValue.indexOf('.');
+          if (dot >= 0) {
+            numPadValue = numPadValue.slice(0, dot + 1) + key;
+            renderNumPadDisplay();
+            return;
+          }
+          numPadQuickMode = false;
+          numPadQuickPressCount = 0;
+        } else if (numPadTarget === 'uric') {
+          if (numPadValue.length === 3) {
+            if (numPadQuickPressCount === 0) {
+              numPadValue = numPadValue.charAt(0) + key + numPadValue.charAt(2);
+              numPadQuickPressCount = 1;
+              renderNumPadDisplay();
+              return;
+            }
+            numPadValue = numPadValue.slice(0, 2) + key;
+            numPadQuickPressCount = 2;
+            renderNumPadDisplay();
+            return;
+          }
+          numPadQuickMode = false;
+          numPadQuickPressCount = 0;
+        }
+      }
+    }
+
+    // 普通输入
+    if (key === 'del') {
+      numPadValue = numPadValue.slice(0, -1);
+    } else if (key === '.') {
+      if (!cfg.allowDecimal) return;
+      if (numPadValue.indexOf('.') >= 0) return;
+      if (numPadValue === '') numPadValue = '0';
+      numPadValue += '.';
+    } else {
+      if (numPadValue.indexOf('.') >= 0) {
+        var parts = numPadValue.split('.');
+        if (parts[1].length >= cfg.decMax) return;
+      } else {
+        if (numPadValue.length >= cfg.maxLen) return;
+        if (numPadValue === '0') numPadValue = '';
+      }
+      numPadValue += key;
+    }
+    renderNumPadDisplay();
+  }
+
+  function confirmNumPad() {
+    if (!numPadTarget) return;
+    var cfg = NUMPAD_CONFIG[numPadTarget];
+    var v = numPadValue;
+
+    if (v === '' || v === '.') {
+      $('#' + numPadTarget).value = '';
+      closeNumPad();
+      return;
+    }
+
+    var n = parseFloat(v);
+    if (!isFinite(n) || n <= 0 || n > cfg.max) {
+      alert(cfg.title + ' 请输入 ' + cfg.min + ' ~ ' + cfg.max + ' 之间的数值');
+      return;
+    }
+
+    $('#' + numPadTarget).value = v;
+    closeNumPad();
+  }
+
+  function initNumPad() {
+    ['glucose', 'uric'].forEach(function (id) {
+      var el = $('#' + id);
+      if (!el) return;
+      el.addEventListener('click', function () { openNumPad(id); });
+      el.addEventListener('focus', function () { this.blur(); });
+    });
+
+    $('#numPadClose').addEventListener('click', closeNumPad);
+    $('#numPadCancel').addEventListener('click', closeNumPad);
+    $('#numPadOk').addEventListener('click', confirmNumPad);
+
+    $('#numPadOverlay').addEventListener('click', function (e) {
+      if (e.target === this) closeNumPad();
+    });
+
+    $('#numPadKeys').addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-key]') : null;
+      if (!b) return;
+      numPadInput(b.getAttribute('data-key'));
+    });
+
+    $('#numPadQuick').addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-quick]') : null;
+      if (!b) return;
+      numPadValue = b.getAttribute('data-quick');
+      numPadQuickMode = true;
+      numPadQuickPressCount = 0;
+      renderNumPadDisplay();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (!numPadTarget) return;
+      if (e.key === 'Escape') { closeNumPad(); return; }
+      if (e.key === 'Enter') { confirmNumPad(); return; }
+      if (/^[0-9]$/.test(e.key)) { numPadInput(e.key); return; }
+      if (e.key === '.' || e.key === '。') { numPadInput('.'); return; }
+      if (e.key === 'Backspace') { numPadInput('del'); return; }
+    });
   }
 
   /* ---------- IndexedDB ---------- */
@@ -1722,7 +2019,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         editingId = null;
         $('#formTitle').textContent = '记一次';
         $('#submitBtn').textContent = '保存';
-        $('#cancelEdit').hidden = true;
+        $('#cancelRow').hidden = true;
         toast('已保存修改');
       } else {
         records.push({
@@ -1740,7 +2037,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       $('#uric').value = '';
       $('#note').value = '';
       renderAll();
-      $('#glucose').focus();
     } catch (err) {
       alert('保存失败：' + err.message);
     } finally {
@@ -1763,7 +2059,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     $('#note').value = r.note || '';
     $('#formTitle').textContent = '修改记录';
     $('#submitBtn').textContent = '保存修改';
-    $('#cancelEdit').hidden = false;
+    $('#cancelRow').hidden = false;
 
     if (r.imageId) {
       idbGet(r.imageId).then(function (v) {
@@ -1781,7 +2077,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     editingId = null;
     $('#formTitle').textContent = '记一次';
     $('#submitBtn').textContent = '保存';
-    $('#cancelEdit').hidden = true;
+    $('#cancelRow').hidden = true;
     $('#glucose').value = '';
     $('#uric').value = '';
     $('#note').value = '';
@@ -1880,7 +2176,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
   function encodeSharePayload(list, name) {
     var slim = list.map(function (r) {
-      var o = {
+      return {
         d: r.date,
         t: r.time || '',
         g: r.glucose != null ? r.glucose : null,
@@ -1888,7 +2184,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         y: r.gtype || '',
         n: r.note || ''
       };
-      return o;
     });
     var payload = { n: name || '', v: 1, r: slim };
     var json = JSON.stringify(payload);
@@ -1998,13 +2293,11 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     var ownerText = sharedOwner ? sharedOwner + ' 分享的记录' : '分享的记录';
     document.getElementById('shareBannerTitle').textContent = ownerText;
     document.getElementById('shareBannerSub').textContent = '共 ' + sharedRecords.length + ' 条 · 只读查看';
-    // 补一下页面标题
     document.title = ownerText + ' · 血糖 · 尿酸';
   }
 
   function exitShareMode() {
     location.hash = '';
-    // 用 replace 方式避免留在历史记录里
     location.replace(location.href.split('#')[0]);
   }
 
@@ -2357,13 +2650,11 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   function init() {
     load();
 
-    // 先检查分享链接
     var isShare = checkShareHash();
 
     $('#date').value = todayStr();
     $('#time').value = nowTime();
 
-    // 名字输入框
     var ownerInput = $('#ownerName');
     if (ownerInput) ownerInput.value = getOwnerName();
 
@@ -2378,7 +2669,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       drawChart();
     });
 
-    // 我的名字
     var saveOwnerBtn = $('#saveOwnerName');
     if (saveOwnerBtn) {
       saveOwnerBtn.addEventListener('click', function () {
@@ -2388,7 +2678,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       });
     }
 
-    // 分享按钮
     var shareBtn = $('#shareBtn');
     if (shareBtn) {
       shareBtn.addEventListener('click', function () {
@@ -2397,7 +2686,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       });
     }
 
-    // 分享弹窗
     var shareCopyBtn = $('#shareCopy');
     if (shareCopyBtn) {
       shareCopyBtn.addEventListener('click', function () {
@@ -2422,13 +2710,11 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       });
     }
 
-    // 分享模式横幅按钮
     var shareSaveBtn = $('#shareSaveLocal');
     if (shareSaveBtn) shareSaveBtn.addEventListener('click', saveSharedToLocal);
     var shareExitBtn = $('#shareExit');
     if (shareExitBtn) shareExitBtn.addEventListener('click', exitShareMode);
 
-    // 图片选择
     $('#imageInput').addEventListener('change', function (e) {
       if (shareMode) { e.target.value = ''; return; }
       var file = e.target.files && e.target.files[0];
@@ -2465,7 +2751,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       }
     });
 
-    // 记录操作
     document.addEventListener('click', function (e) {
       if (shareMode) return;
       var btn = e.target.closest ? e.target.closest('button[data-act]') : null;
@@ -2491,7 +2776,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       }
     });
 
-    // 点击图片打开查看器
     document.addEventListener('click', function (e) {
       var target = e.target;
       if (!target || !target.closest) return;
@@ -2549,12 +2833,12 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     });
 
     initChartEvents();
+    initNumPad();
     initPWA();
 
     if (isShare) {
       enterShareMode();
       renderAll();
-      // 分享模式默认展示趋势
       showView('trend', true);
       setTimeout(drawChart, 60);
     } else {
