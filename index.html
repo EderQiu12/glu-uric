@@ -93,6 +93,7 @@ body.share-mode .nav-data{display:none}
 .card h2{font-size:17px;margin:0 0 14px;font-weight:700}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .card-head h2{margin:0}
+.card-head-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:auto}
 .trend-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 
 .view{display:none}
@@ -153,8 +154,8 @@ input[readonly]{cursor:pointer}
 .btn-inline{
   width:auto;
   min-height:44px;
-  padding:0 22px;
-  font-size:16px;
+  padding:0 18px;
+  font-size:15px;
   flex-shrink:0;
 }
 
@@ -291,6 +292,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   padding:14px 14px calc(14px + env(safe-area-inset-bottom));
   box-shadow:0 -10px 40px rgba(10,20,40,.25);
   animation:numpad-in .2s ease-out;
+  max-height:92vh;overflow-y:auto;
 }
 @keyframes numpad-in{from{transform:translateY(100%)}to{transform:translateY(0)}}
 
@@ -309,21 +311,21 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
 .numpad-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
 .numpad-quick button{
-  min-height:44px;border-radius:10px;border:1.5px solid var(--line);
-  background:#f8fafd;color:#435063;font-size:16px;font-weight:600;cursor:pointer;
+  min-height:42px;border-radius:10px;border:1.5px solid var(--line);
+  background:#f8fafd;color:#435063;font-size:15px;font-weight:600;cursor:pointer;
 }
 .numpad-quick button.active{background:var(--pri-soft);border-color:var(--pri);color:var(--pri)}
 
 .numpad-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
 .numpad-keys button{
-  min-height:54px;border-radius:12px;border:0;background:#f1f5fa;
-  color:#182230;font-size:24px;font-weight:600;cursor:pointer;
+  min-height:52px;border-radius:12px;border:0;background:#f1f5fa;
+  color:#182230;font-size:23px;font-weight:600;cursor:pointer;
 }
 .numpad-keys button:active{background:#e3e9f1}
 .numpad-keys button.func{background:#eef2f7;color:#5a6675;font-size:18px}
 
 .numpad-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:10px}
-.numpad-actions .btn{min-height:52px}
+.numpad-actions .btn{min-height:50px}
 
 .lv-low{color:var(--low)} .lv-ok{color:var(--ok)} .lv-warn{color:var(--warn)}
 .lv-high{color:var(--bad)} .lv-severe{color:var(--severe)}
@@ -407,7 +409,10 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       <div class="card">
         <div class="card-head">
           <h2 id="formTitle">记一次</h2>
-          <button type="submit" form="recordForm" class="btn primary btn-inline" id="submitBtn">保存</button>
+          <div class="card-head-actions">
+            <button type="button" class="btn ghost btn-inline" id="cancelEdit" hidden>取消修改</button>
+            <button type="submit" form="recordForm" class="btn primary btn-inline" id="submitBtn">保存</button>
+          </div>
         </div>
         <form id="recordForm" novalidate>
           <div class="grid2">
@@ -452,10 +457,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
               </div>
             </div>
             <p class="tip" id="imageTip">图片会压缩后保存在本机，不会上传；可拍照或从相册选择。</p>
-          </div>
-
-          <div class="btn-row" id="cancelRow" hidden>
-            <button type="button" class="btn ghost" id="cancelEdit">取消修改</button>
           </div>
         </form>
       </div>
@@ -746,7 +747,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       maxLen: 4,
       allowDecimal: true,
       decMax: 1,
-      quick: ['4.0','5.0','6.0','7.0','8.0','9.0','10.0','11.0'],
+      quick: ['4.0','5.0','6.0','7.0','8.0','9.0','10.0','11.0','12.0','13.0','14.0','15.0'],
       min: 1, max: 50
     },
     uric: {
@@ -755,7 +756,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       maxLen: 4,
       allowDecimal: false,
       decMax: 0,
-      quick: ['300','350','400','450','500','550','600','650'],
+      quick: ['300','350','400','450','500','550','600','650','700','750','800','850'],
       min: 1, max: 2000
     }
   };
@@ -2019,7 +2020,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         editingId = null;
         $('#formTitle').textContent = '记一次';
         $('#submitBtn').textContent = '保存';
-        $('#cancelRow').hidden = true;
+        $('#cancelEdit').hidden = true;
         toast('已保存修改');
       } else {
         records.push({
@@ -2059,7 +2060,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     $('#note').value = r.note || '';
     $('#formTitle').textContent = '修改记录';
     $('#submitBtn').textContent = '保存修改';
-    $('#cancelRow').hidden = false;
+    $('#cancelEdit').hidden = false;
 
     if (r.imageId) {
       idbGet(r.imageId).then(function (v) {
@@ -2077,7 +2078,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     editingId = null;
     $('#formTitle').textContent = '记一次';
     $('#submitBtn').textContent = '保存';
-    $('#cancelRow').hidden = true;
+    $('#cancelEdit').hidden = true;
     $('#glucose').value = '';
     $('#uric').value = '';
     $('#note').value = '';
