@@ -122,8 +122,8 @@ body.share-mode .nav-data{display:none}
 .view.active{display:block;animation:fade .16s ease-out}
 @keyframes fade{from{opacity:.35;transform:translateY(3px)}to{opacity:1;transform:none}}
 
-.field{display:flex;flex-direction:column;gap:6px}
-.field>span{font-size:14px;color:#5a6675;font-weight:500}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>span{font-size:14px;color:#5a6675;font-weight:500;white-space:nowrap}
 input,select{
   font-family:inherit;font-size:17px;min-height:52px;padding:11px 13px;width:100%;
   border:1.5px solid var(--line);border-radius:12px;background:#fff;color:inherit;
@@ -132,19 +132,23 @@ input::placeholder{color:#a9b3c1}
 input:focus,select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
 input[readonly]{cursor:pointer}
 
-/* 日期时间：左右两列，文字居中，字号略小，确保能完整显示 */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+/* 强制两列，防止被系统大字体撑破 */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .grid2 .field>span{font-size:13px}
-.grid2 input,.grid2 select{padding:10px 8px;font-size:15px;min-height:50px;text-align:center}
-.grid2 input[type="date"],.grid2 input[type="time"]{
-  font-size:15px;
-  padding-left:6px;
-  padding-right:6px;
+.grid2 input,.grid2 select{
+  padding:10px 4px;
+  font-size:14px; /* 调小一点保证单列能塞下 */
+  min-height:50px;
+  text-align:center;
 }
-@media(max-width:340px){.grid2{grid-template-columns:1fr}}
+.grid2 input[type="date"],.grid2 input[type="time"]{
+  min-width:0; /* 核心：允许在 flex/grid 中收缩，不被撑破 */
+  -webkit-appearance:none;
+}
 
-#glucose{background-color:#ffe8e8 !important;border-color:#f5b5b5;text-align:left}
-#uric{background-color:#fff8cc !important;border-color:#ecd97a;text-align:left}
+/* 血糖尿酸背景 */
+#glucose{background-color:#ffe8e8 !important;border-color:#f5b5b5;text-align:left;padding-left:10px}
+#uric{background-color:#fff8cc !important;border-color:#ecd97a;text-align:left;padding-left:10px}
 #glucose:focus,#uric:focus{box-shadow:0 0 0 3px rgba(37,99,235,.10)}
 
 .image-field{margin-bottom:12px}
@@ -469,7 +473,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
               </select>
             </label>
             <label class="field"><span>备注（选填）</span>
-              <input type="text" id="note" maxlength="60" placeholder="比如 吃了面条">
+              <input type="text" id="note" maxlength="60" placeholder="吃了面条">
             </label>
           </div>
 
@@ -2756,7 +2760,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     var shareExitBtn = $('#shareExit');
     if (shareExitBtn) shareExitBtn.addEventListener('click', exitShareMode);
 
-    // 拍照和相册共用处理函数
     function handleImageFile(file) {
       if (shareMode) return;
       if (!file) return;
