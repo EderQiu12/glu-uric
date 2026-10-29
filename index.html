@@ -498,10 +498,9 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   <div class="sticky-top" id="stickyTop">
     <header class="topbar">
       <h1>血糖 · 尿酸 记录本</h1>
-      <!-- 点击副标题显示版本号 -->
       <p id="versionTrigger">
         <span>数据只保存在本机，离线也能用</span>
-        <span class="version-badge" id="versionBadge" hidden>v11</span>
+        <span class="version-badge" id="versionBadge" hidden>v12</span>
       </p>
     </header>
     <div class="action-bar" id="entryActions" hidden>
@@ -863,6 +862,10 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   var dpInited = false;
   var WHEEL_ITEM_H = 44;
 
+  // 自动保存状态
+  var autoSaveTimer = null;
+  var autoSavedRecordId = null;
+
   var $ = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -945,16 +948,34 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     try { localStorage.setItem(OWNER_KEY, name); } catch (e) {}
   }
 
-  /* ---------- 草稿暂存逻辑 ---------- */
+  /* ---------- 草稿暂存 & 自动保存 ---------- */
+
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = null;
+    autoSavedRecordId = null;
+  }
+
+  function resetAutoSaveTimer() {
+    clearTimeout(autoSaveTimer);
+    if (shareMode || editingId) return;
+    
+    // 45秒后自动保存
+    autoSaveTimer = setTimeout(function() {
+      doAutoSave();
+    }, 45000);
+  }
+
   function saveDraft() {
     if (shareMode || editingId) return;
     var g = $('#glucose').value.trim();
     var u = $('#uric').value.trim();
     var n = $('#note').value.trim();
     
-    // 如果全为空，清除草稿
     if (!g && !u && !n) {
-      localStorage.removeItem(DRAFT_KEY);
+      try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+      clearTimeout(autoSaveTimer);
       return;
     }
     
@@ -964,15 +985,69 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       glucose: g,
       uric: u,
       gtype: $('#gtype').value,
-      note: n
+      note: n,
+      autoSavedRecordId: autoSavedRecordId // 关键：把自动保存的 ID 存进草稿
     };
+    
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     } catch(e) {}
+    
+    resetAutoSaveTimer();
   }
 
-  function clearDraft() {
-    try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+  function doAutoSave() {
+    if (shareMode || editingId) return;
+    
+    var gRaw = $('#glucose').value.trim();
+    var uRaw = $('#uric').value.trim();
+    var note = $('#note').value.trim();
+    
+    if (gRaw === '' && uRaw === '' && note === '') return;
+    
+    var glucose = gRaw !== '' ? Number(gRaw) : null;
+    var uric = uRaw !== '' ? Number(uRaw) : null;
+    
+    // 基础校验
+    if (glucose != null && (glucose <= 0 || glucose > 50)) glucose = null;
+    if (uric != null && (uric <= 0 || uric > 2000)) uric = null;
+    if (glucose === null && uric === null && !note) return;
+
+    var newId = autoSavedRecordId || uid();
+    var data = {
+      id: newId,
+      date: $('#date').value,
+      time: $('#time').value,
+      glucose: glucose,
+      uric: uric,
+      gtype: $('#gtype').value,
+      note: note,
+      imageId: null, // 图片仍需手动保存才写入，防止自动保存失败
+      imageName: '',
+      createdAt: Date.now()
+    };
+
+    if (autoSavedRecordId) {
+      // 覆盖之前的自动保存
+      var idx = records.findIndex(function(r) { return r.id === autoSavedRecordId; });
+      if (idx >= 0) {
+        data.createdAt = records[idx].createdAt; // 保留最早创建时间
+        records[idx] = data;
+      } else {
+        records.push(data);
+      }
+    } else {
+      // 新建自动保存
+      records.push(data);
+      autoSavedRecordId = newId;
+    }
+    
+    // 同步更新草稿里的 ID
+    saveDraft();
+    
+    persist();
+    renderAll();
+    toast('长期未操作，已自动保存为记录');
   }
 
   function restoreDraft() {
@@ -989,10 +1064,17 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       $('#gtype').value = d.gtype || '空腹';
       $('#note').value = d.note || '';
       
-      // 延迟弹提示
+      autoSavedRecordId = d.autoSavedRecordId || null;
+      
       setTimeout(function() {
-        toast('已恢复上次未保存的内容');
+        if (autoSavedRecordId) {
+          toast('已恢复上次未保存的内容（已自动存为记录）');
+        } else {
+          toast('已恢复上次未保存的内容');
+        }
       }, 600);
+      
+      resetAutoSaveTimer();
     } catch(e) {}
   }
 
@@ -2484,6 +2566,12 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
           imageId = old.imageId || null;
           imageName = old.imageName || '';
         }
+      } else if (autoSavedRecordId) {
+        var oldAuto = records.filter(function (x) { return x.id === autoSavedRecordId; })[0];
+        if (oldAuto && oldAuto.imageId) {
+          imageId = oldAuto.imageId || null;
+          imageName = oldAuto.imageName || '';
+        }
       }
 
       if (pendingImage) {
@@ -2520,7 +2608,32 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         $('#submitBtn').textContent = '保存';
         $('#entryActions').hidden = true;
         toast('已保存修改');
+      } else if (autoSavedRecordId) {
+        // 如果已经自动存过，这里就覆盖
+        var idx = records.findIndex(function(x) { return x.id === autoSavedRecordId; });
+        if (idx >= 0) {
+          records[idx].date = date;
+          records[idx].time = time;
+          records[idx].glucose = glucose;
+          records[idx].uric = uric;
+          records[idx].gtype = gtype;
+          records[idx].note = note;
+          if (imageId) {
+            records[idx].imageId = imageId;
+            records[idx].imageName = imageName;
+          }
+          toast('已保存');
+        } else {
+          records.push({
+            id: uid(), date: date, time: time, glucose: glucose,
+            uric: uric, gtype: gtype, note: note,
+            imageId: imageId || null, imageName: imageName || '',
+            createdAt: Date.now()
+          });
+          toast('已保存');
+        }
       } else {
+        // 正常新建
         records.push({
           id: uid(), date: date, time: time, glucose: glucose,
           uric: uric, gtype: gtype, note: note,
@@ -2532,7 +2645,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
       persist();
       resetImageState();
-      clearDraft(); // 保存成功，清除草稿
+      clearDraft(); // 保存成功，清除草稿和定时器
       $('#glucose').value = '';
       $('#uric').value = '';
       $('#note').value = '';
@@ -3315,6 +3428,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         }
         records = records.filter(function (x) { return x.id !== id; });
         if (editingId === id) cancelEdit();
+        if (autoSavedRecordId === id) clearDraft(); // 如果删的是自动保存的，也清草稿
         persist();
         renderAll();
         toast('已删除');
