@@ -80,6 +80,7 @@ body{
   background:rgba(255,255,255,.18);color:#fff;border-color:transparent;
   min-height:38px;padding:0 12px;font-size:13px;font-weight:600;
 }
+.share-banner-actions .mini:active{background:rgba(255,255,255,.3)}
 
 body.share-mode .nav-entry,
 body.share-mode .nav-data{display:none}
@@ -136,196 +137,19 @@ input[readonly]{cursor:pointer}
 .grid2 .field>span{font-size:13px}
 .grid2 input,.grid2 select{
   padding:10px 4px;
-  font-size:14px;
+  font-size:14px; /* 调小一点保证单列能塞下 */
   min-height:50px;
   text-align:center;
 }
-.grid2 .picker-field{
-  padding:10px 10px;
-  font-size:14px;
-  min-height:50px;
+.grid2 input[type="date"],.grid2 input[type="time"]{
+  min-width:0; /* 核心：允许在 flex/grid 中收缩，不被撑破 */
+  -webkit-appearance:none;
 }
 
+/* 血糖尿酸背景 */
 #glucose{background-color:#ffe8e8 !important;border-color:#f5b5b5;text-align:left;padding-left:10px}
 #uric{background-color:#fff8cc !important;border-color:#ecd97a;text-align:left;padding-left:10px}
 #glucose:focus,#uric:focus{box-shadow:0 0 0 3px rgba(37,99,235,.10)}
-
-/* 自定义日期/时间字段按钮 */
-.picker-field{
-  display:flex;align-items:center;justify-content:space-between;
-  width:100%;min-height:52px;padding:11px 13px;
-  border:1.5px solid var(--line);border-radius:12px;
-  background:#fff;font-size:17px;color:var(--txt);
-  cursor:pointer;text-align:left;font-family:inherit;
-  transition:border-color .15s;
-}
-.picker-field:active{border-color:var(--pri);background:#f8faff}
-.picker-field-icon{color:#a9b3c1;font-size:14px;margin-left:8px}
-
-/* ===== 选择器弹窗 ===== */
-.picker-modal{
-  position:fixed;inset:0;z-index:150;
-  display:flex;align-items:flex-end;justify-content:center;
-}
-.picker-modal[hidden]{display:none}
-
-.picker-backdrop{
-  position:absolute;inset:0;
-  background:rgba(8,12,20,.55);
-  animation:fadeIn .2s;
-}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-
-.picker-panel{
-  position:relative;
-  width:100%;max-width:420px;
-  background:#fff;
-  border-radius:22px 22px 0 0;
-  padding:18px 18px calc(16px + env(safe-area-inset-bottom));
-  animation:slideUp .24s cubic-bezier(.2,.9,.3,1);
-}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-
-.picker-display{
-  display:flex;align-items:center;justify-content:center;
-  gap:2px;padding:6px 0 16px;
-  flex-wrap:nowrap;
-}
-.picker-big{
-  font-size:40px;font-weight:700;color:var(--pri);
-  font-variant-numeric:tabular-nums;
-  min-width:62px;text-align:center;line-height:1.1;
-}
-.picker-colon{
-  font-size:34px;font-weight:700;color:var(--pri);
-  margin:0 2px;line-height:1.1;
-}
-.picker-digit-btn{
-  font-family:inherit;
-  font-size:26px;font-weight:700;color:var(--pri);
-  background:none;border:0;padding:4px 6px;cursor:pointer;
-  border-radius:8px;font-variant-numeric:tabular-nums;
-  transition:background .15s;
-}
-.picker-digit-btn:active{background:var(--pri-soft)}
-.picker-unit{
-  font-size:15px;color:var(--muted);margin:0 6px 0 1px;
-}
-
-.picker-wheels{
-  position:relative;
-  display:flex;gap:20px;justify-content:center;
-  border-top:1px solid #eef2f7;
-  border-bottom:1px solid #eef2f7;
-  padding:0 6px;
-}
-.picker-wheels::before{
-  content:'';position:absolute;
-  left:0;right:0;top:50%;height:44px;margin-top:-22px;
-  background:linear-gradient(90deg,rgba(37,99,235,.06),rgba(37,99,235,.10),rgba(37,99,235,.06));
-  border-radius:10px;
-  pointer-events:none;z-index:0;
-}
-.picker-wheel{
-  position:relative;z-index:1;
-  flex:1;
-  height:220px;overflow-y:auto;
-  scroll-snap-type:y mandatory;
-  -webkit-overflow-scrolling:touch;
-  padding:88px 0;
-  scrollbar-width:none;
-  overscroll-behavior:contain;
-}
-.picker-wheel::-webkit-scrollbar{display:none}
-.wheel-item{
-  height:44px;
-  display:flex;align-items:center;justify-content:center;
-  scroll-snap-align:center;
-  font-size:20px;color:#5a6675;
-  font-variant-numeric:tabular-nums;
-  user-select:none;
-}
-
-.picker-actions{
-  display:flex;gap:10px;margin-top:16px;
-}
-.picker-actions .picker-btn{
-  flex:1;
-  min-height:50px;
-  border:1.5px solid var(--line);
-  background:#fff;color:#435063;
-  border-radius:12px;
-  font-family:inherit;font-size:16px;font-weight:600;
-  cursor:pointer;
-  transition:transform .08s;
-}
-.picker-actions .picker-btn:active{transform:scale(.98)}
-.picker-actions .picker-btn.primary{
-  background:var(--pri);border-color:var(--pri);color:#fff;
-}
-
-.picker-body{min-height:290px;position:relative}
-.calendar-view,.year-list-view,.month-list-view{animation:fade .15s}
-.calendar-view[hidden],
-.year-list-view[hidden],
-.month-list-view[hidden]{display:none}
-
-.calendar-nav{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:2px 0 6px;
-}
-.calendar-title{
-  font-size:16px;font-weight:600;color:var(--txt);
-}
-.calendar-arrow{
-  width:40px;height:40px;border:0;
-  background:#f6f9fd;border-radius:10px;
-  font-size:22px;color:#435063;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  padding:0;
-}
-.calendar-arrow:active{background:#e8eef8}
-.calendar-weekdays{
-  display:grid;grid-template-columns:repeat(7,1fr);
-  text-align:center;font-size:12px;color:var(--muted);
-  padding:4px 0;
-}
-.calendar-grid{
-  display:grid;grid-template-columns:repeat(7,1fr);gap:2px;
-}
-.calendar-day{
-  aspect-ratio:1;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:10px;
-  font-family:inherit;
-  font-size:15px;color:var(--txt);
-  background:none;border:0;cursor:pointer;
-  font-variant-numeric:tabular-nums;
-  transition:background .1s;
-}
-.calendar-day:active{background:#f0f5ff}
-.calendar-day.today{color:var(--pri);font-weight:700}
-.calendar-day.selected{background:var(--pri);color:#fff;font-weight:600}
-.calendar-day.selected:active{background:#1d4ed8}
-.calendar-day.other{color:#c3cddb}
-
-.year-list,.month-list{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
-  padding:10px 0;
-  max-height:280px;overflow-y:auto;
-}
-.year-item,.month-item{
-  height:50px;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:10px;background:#f6f9fd;
-  border:0;font-family:inherit;font-size:16px;color:var(--txt);
-  cursor:pointer;
-  transition:background .1s;
-}
-.year-item:active,.month-item:active{background:#e8eef8}
-.year-item.selected,.month-item.selected{
-  background:var(--pri);color:#fff;font-weight:600;
-}
 
 .image-field{margin-bottom:12px}
 .image-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -360,6 +184,7 @@ input[readonly]{cursor:pointer}
 .btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}
 .btn.ghost{background:#f6f9fd}
 .btn.danger{color:var(--bad);border-color:#f6cccc;background:#fff}
+
 .btn-inline{
   width:auto;
   min-height:44px;
@@ -503,9 +328,11 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   max-height:92vh;overflow-y:auto;
 }
 @keyframes numpad-in{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
 .numpad-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .numpad-title{font-size:16px;font-weight:700}
 .numpad-close{width:36px;height:36px;border-radius:50%;border:0;background:#f1f5fa;color:#5a6675;font-size:20px;cursor:pointer;line-height:1}
+
 .numpad-display{
   text-align:center;font-size:42px;font-weight:800;color:#182230;
   padding:6px 0 8px;min-height:62px;line-height:1.1;
@@ -514,12 +341,14 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 }
 .numpad-display .unit{font-size:13px;font-weight:500;color:var(--muted);margin-left:5px}
 .numpad-display.empty{color:#c3cddb}
+
 .numpad-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
 .numpad-quick button{
   min-height:42px;border-radius:10px;border:1.5px solid var(--line);
   background:#f8fafd;color:#435063;font-size:15px;font-weight:600;cursor:pointer;
 }
 .numpad-quick button.active{background:var(--pri-soft);border-color:var(--pri);color:var(--pri)}
+
 .numpad-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
 .numpad-keys button{
   min-height:52px;border-radius:12px;border:0;background:#f1f5fa;
@@ -527,11 +356,13 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 }
 .numpad-keys button:active{background:#e3e9f1}
 .numpad-keys button.func{background:#eef2f7;color:#5a6675;font-size:18px}
+
 .numpad-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:10px}
 .numpad-actions .btn{min-height:50px}
 
 .lv-low{color:var(--low)} .lv-ok{color:var(--ok)} .lv-warn{color:var(--warn)}
 .lv-high{color:var(--bad)} .lv-severe{color:var(--severe)}
+
 .badge{display:inline-block;font-size:12px;font-weight:600;line-height:1.3;
   padding:2px 7px;border-radius:6px;margin-left:6px;vertical-align:2px;white-space:nowrap}
 .badge.lv-low{background:#e8f0ff;color:#2563eb}
@@ -566,8 +397,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   .share-banner{top:0}
   .numpad{max-width:440px;border-radius:20px;margin-bottom:20px}
   .numpad-overlay{align-items:center}
-  .picker-modal{align-items:center}
-  .picker-panel{border-radius:22px;padding-bottom:18px}
 }
 </style>
 </head>
@@ -620,22 +449,8 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         <h2 id="formTitle">记一次</h2>
         <form id="recordForm" novalidate>
           <div class="grid2">
-            <div class="field">
-              <span>日期</span>
-              <button type="button" class="picker-field" id="dateFieldBtn">
-                <span id="dateFieldText">2026-10-27</span>
-                <span class="picker-field-icon">▾</span>
-              </button>
-              <input type="hidden" id="date" value="2026-10-27">
-            </div>
-            <div class="field">
-              <span>时间</span>
-              <button type="button" class="picker-field" id="timeFieldBtn">
-                <span id="timeFieldText">08:30</span>
-                <span class="picker-field-icon">▾</span>
-              </button>
-              <input type="hidden" id="time" value="08:30">
-            </div>
+            <label class="field"><span>日期</span><input type="date" id="date" required></label>
+            <label class="field"><span>时间</span><input type="time" id="time"></label>
           </div>
 
           <div class="grid2">
@@ -800,63 +615,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   </main>
 </div>
 
-<!-- ===== 时间选择器 ===== -->
-<div class="picker-modal" id="timeModal" hidden>
-  <div class="picker-backdrop" data-close="time"></div>
-  <div class="picker-panel">
-    <div class="picker-display">
-      <span class="picker-big" id="pickerHourDisplay">08</span>
-      <span class="picker-colon">:</span>
-      <span class="picker-big" id="pickerMinuteDisplay">30</span>
-    </div>
-    <div class="picker-wheels">
-      <div class="picker-wheel" id="hourWheel"></div>
-      <div class="picker-wheel" id="minuteWheel"></div>
-    </div>
-    <div class="picker-actions">
-      <button type="button" class="picker-btn" data-close="time">取消</button>
-      <button type="button" class="picker-btn" id="timeNowBtn">现在</button>
-      <button type="button" class="picker-btn primary" id="timeConfirmBtn">确定</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 日期选择器 ===== -->
-<div class="picker-modal" id="dateModal" hidden>
-  <div class="picker-backdrop" data-close="date"></div>
-  <div class="picker-panel">
-    <div class="picker-display">
-      <button type="button" class="picker-digit-btn" id="yearBtn">2026</button><span class="picker-unit">年</span>
-      <button type="button" class="picker-digit-btn" id="monthBtn">10</button><span class="picker-unit">月</span>
-      <button type="button" class="picker-digit-btn" id="dayBtn">27</button><span class="picker-unit">日</span>
-    </div>
-    <div class="picker-body">
-      <div class="calendar-view" id="calendarView">
-        <div class="calendar-nav">
-          <button type="button" class="calendar-arrow" id="prevMonthBtn">‹</button>
-          <span class="calendar-title" id="calendarTitle">2026年10月</span>
-          <button type="button" class="calendar-arrow" id="nextMonthBtn">›</button>
-        </div>
-        <div class="calendar-weekdays">
-          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-        </div>
-        <div class="calendar-grid" id="calendarGrid"></div>
-      </div>
-      <div class="year-list-view" id="yearListView" hidden>
-        <div class="year-list" id="yearList"></div>
-      </div>
-      <div class="month-list-view" id="monthListView" hidden>
-        <div class="month-list" id="monthList"></div>
-      </div>
-    </div>
-    <div class="picker-actions">
-      <button type="button" class="picker-btn" data-close="date">取消</button>
-      <button type="button" class="picker-btn" id="dateTodayBtn">今天</button>
-      <button type="button" class="picker-btn primary" id="dateConfirmBtn">确定</button>
-    </div>
-  </div>
-</div>
-
 <div id="imgViewer" class="img-viewer" hidden>
   <button type="button" id="imgViewerClose" class="img-viewer-close" aria-label="关闭">×</button>
   <img id="imgViewerImg" alt="图片备注">
@@ -939,13 +697,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   var numPadQuickMode = false;
   var numPadQuickPressCount = 0;
 
-  // Picker 状态
-  var dpYear, dpMonth, dpDay;
-  var dpViewYear, dpViewMonth;
-  var dpMode = 'calendar';
-  var dpInited = false;
-  var WHEEL_ITEM_H = 44;
-
   var $ = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -991,7 +742,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   function keyOf(r) { return (r.date || '') + ' ' + (r.time || '00:00'); }
   function sortDesc() { return activeRecords().slice().sort(function (a, b) { return keyOf(b).localeCompare(keyOf(a)); }); }
   function sortAsc() { return activeRecords().slice().sort(function (a, b) { return keyOf(a).localeCompare(keyOf(b)); }); }
-  function sortAscForRecords() { return records.slice().sort(function (a, b) { return keyOf(a).localeCompare(keyOf(b)); }); }
 
   function activeRecords() { return shareMode ? sharedRecords : records; }
 
@@ -1032,14 +782,20 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
   var NUMPAD_CONFIG = {
     glucose: {
-      title: '血糖（mmol/L）', unit: 'mmol/L',
-      maxLen: 4, allowDecimal: true, decMax: 1,
+      title: '血糖（mmol/L）',
+      unit: 'mmol/L',
+      maxLen: 4,
+      allowDecimal: true,
+      decMax: 1,
       quick: ['4.0','5.0','6.0','7.0','8.0','9.0','10.0','11.0','12.0','13.0','14.0','15.0'],
       min: 1, max: 50
     },
     uric: {
-      title: '尿酸（μmol/L）', unit: 'μmol/L',
-      maxLen: 4, allowDecimal: false, decMax: 0,
+      title: '尿酸（μmol/L）',
+      unit: 'μmol/L',
+      maxLen: 4,
+      allowDecimal: false,
+      decMax: 0,
       quick: ['300','350','400','450','500','550','600','650','700','750','800','850'],
       min: 1, max: 2000
     }
@@ -1105,7 +861,9 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         renderNumPadDisplay();
         return;
       }
-      if (key === '.') return;
+      if (key === '.') {
+        return;
+      }
       if (/^[0-9]$/.test(key)) {
         if (numPadTarget === 'glucose') {
           var dot = numPadValue.indexOf('.');
@@ -1159,16 +917,19 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     if (!numPadTarget) return;
     var cfg = NUMPAD_CONFIG[numPadTarget];
     var v = numPadValue;
+
     if (v === '' || v === '.') {
       $('#' + numPadTarget).value = '';
       closeNumPad();
       return;
     }
+
     var n = parseFloat(v);
     if (!isFinite(n) || n <= 0 || n > cfg.max) {
       alert(cfg.title + ' 请输入 ' + cfg.min + ' ~ ' + cfg.max + ' 之间的数值');
       return;
     }
+
     $('#' + numPadTarget).value = v;
     closeNumPad();
   }
@@ -1184,6 +945,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     $('#numPadClose').addEventListener('click', closeNumPad);
     $('#numPadCancel').addEventListener('click', closeNumPad);
     $('#numPadOk').addEventListener('click', confirmNumPad);
+
     $('#numPadOverlay').addEventListener('click', function (e) {
       if (e.target === this) closeNumPad();
     });
@@ -1211,273 +973,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       if (e.key === '.' || e.key === '。') { numPadInput('.'); return; }
       if (e.key === 'Backspace') { numPadInput('del'); return; }
     });
-  }
-
-  /* ---------- 时间选择器 ---------- */
-
-  function closeAllModals() {
-    document.getElementById('timeModal').hidden = true;
-    document.getElementById('dateModal').hidden = true;
-  }
-
-  function buildWheel(el, count, padLeft) {
-    var html = '';
-    for (var i = 0; i < count; i++) {
-      var label = padLeft ? String(i).padStart(2, '0') : String(i);
-      html += '<div class="wheel-item">' + label + '</div>';
-    }
-    el.innerHTML = html;
-  }
-
-  function wheelIndex(el) {
-    return clamp(Math.round(el.scrollTop / WHEEL_ITEM_H), 0, Math.floor((el.children.length) - 1));
-  }
-
-  function initTimeWheels() {
-    var hourWheel = document.getElementById('hourWheel');
-    var minuteWheel = document.getElementById('minuteWheel');
-    if (hourWheel.children.length) return;
-
-    buildWheel(hourWheel, 24, true);
-    buildWheel(minuteWheel, 60, true);
-
-    var updateHour = function () {
-      document.getElementById('pickerHourDisplay').textContent = p2(wheelIndex(hourWheel));
-    };
-    var updateMinute = function () {
-      document.getElementById('pickerMinuteDisplay').textContent = p2(wheelIndex(minuteWheel));
-    };
-
-    var tick;
-    function onScroll(fn) {
-      return function () {
-        cancelAnimationFrame(tick);
-        tick = requestAnimationFrame(fn);
-      };
-    }
-
-    hourWheel.addEventListener('scroll', onScroll(updateHour), { passive: true });
-    minuteWheel.addEventListener('scroll', onScroll(updateMinute), { passive: true });
-  }
-
-  function openTimePicker() {
-    closeAllModals();
-    initTimeWheels();
-
-    var current = $('#time').value || nowTime();
-    var parts = current.split(':');
-    var hour = clamp(parseInt(parts[0], 10) || 0, 0, 23);
-    var minute = clamp(parseInt(parts[1], 10) || 0, 0, 59);
-
-    document.getElementById('pickerHourDisplay').textContent = p2(hour);
-    document.getElementById('pickerMinuteDisplay').textContent = p2(minute);
-    document.getElementById('timeModal').hidden = false;
-
-    requestAnimationFrame(function () {
-      document.getElementById('hourWheel').scrollTop = hour * WHEEL_ITEM_H;
-      document.getElementById('minuteWheel').scrollTop = minute * WHEEL_ITEM_H;
-    });
-  }
-
-  function confirmTime() {
-    var hour = parseInt(document.getElementById('pickerHourDisplay').textContent, 10) || 0;
-    var minute = parseInt(document.getElementById('pickerMinuteDisplay').textContent, 10) || 0;
-    setTimeValue(p2(hour) + ':' + p2(minute));
-    document.getElementById('timeModal').hidden = true;
-  }
-
-  function setTimeValue(str) {
-    $('#time').value = str || '';
-    $('#timeFieldText').textContent = str || '选择时间';
-  }
-
-  /* ---------- 日期选择器 ---------- */
-
-  function initDatePicker() {
-    if (dpInited) return;
-    dpInited = true;
-
-    var today = new Date();
-    dpYear = today.getFullYear();
-    dpMonth = today.getMonth();
-    dpDay = today.getDate();
-    dpViewYear = dpYear;
-    dpViewMonth = dpMonth;
-
-    document.getElementById('yearBtn').addEventListener('click', function () { switchDateMode('year'); });
-    document.getElementById('monthBtn').addEventListener('click', function () { switchDateMode('month'); });
-    document.getElementById('dayBtn').addEventListener('click', function () { switchDateMode('calendar'); });
-
-    document.getElementById('prevMonthBtn').addEventListener('click', function () {
-      dpViewMonth--;
-      if (dpViewMonth < 0) { dpViewMonth = 11; dpViewYear--; }
-      renderCalendar();
-    });
-    document.getElementById('nextMonthBtn').addEventListener('click', function () {
-      dpViewMonth++;
-      if (dpViewMonth > 11) { dpViewMonth = 0; dpViewYear++; }
-      renderCalendar();
-    });
-
-    document.getElementById('dateTodayBtn').addEventListener('click', function () {
-      var t = new Date();
-      dpYear = t.getFullYear();
-      dpMonth = t.getMonth();
-      dpDay = t.getDate();
-      dpViewYear = dpYear;
-      dpViewMonth = dpMonth;
-      updateDateDisplay();
-      renderCalendar();
-    });
-    document.getElementById('dateConfirmBtn').addEventListener('click', confirmDate);
-  }
-
-  function switchDateMode(mode) {
-    dpMode = mode;
-    document.getElementById('calendarView').hidden = (mode !== 'calendar');
-    document.getElementById('yearListView').hidden = (mode !== 'year');
-    document.getElementById('monthListView').hidden = (mode !== 'month');
-    if (mode === 'year') renderYearList();
-    if (mode === 'month') renderMonthList();
-  }
-
-  function openDatePicker() {
-    closeAllModals();
-    initDatePicker();
-
-    var cur = $('#date').value || todayStr();
-    var parts = cur.split('-');
-    if (parts.length === 3) {
-      dpYear = parseInt(parts[0], 10) || new Date().getFullYear();
-      dpMonth = (parseInt(parts[1], 10) || 1) - 1;
-      dpDay = parseInt(parts[2], 10) || 1;
-    }
-    dpViewYear = dpYear;
-    dpViewMonth = dpMonth;
-
-    switchDateMode('calendar');
-    updateDateDisplay();
-    renderCalendar();
-    document.getElementById('dateModal').hidden = false;
-  }
-
-  function updateDateDisplay() {
-    document.getElementById('yearBtn').textContent = dpYear;
-    document.getElementById('monthBtn').textContent = p2(dpMonth + 1);
-    document.getElementById('dayBtn').textContent = p2(dpDay);
-  }
-
-  function confirmDate() {
-    setDateValue(dpYear + '-' + p2(dpMonth + 1) + '-' + p2(dpDay));
-    document.getElementById('dateModal').hidden = true;
-  }
-
-  function setDateValue(str) {
-    $('#date').value = str || '';
-    $('#dateFieldText').textContent = str || '选择日期';
-  }
-
-  function renderCalendar() {
-    var y = dpViewYear, m = dpViewMonth;
-    var first = new Date(y, m, 1);
-    var startWeekday = first.getDay();
-    var daysInMonth = new Date(y, m + 1, 0).getDate();
-    var prevMonthDays = new Date(y, m, 0).getDate();
-
-    document.getElementById('calendarTitle').textContent = y + '年' + (m + 1) + '月';
-
-    var html = '';
-    var today = new Date();
-    var todayY = today.getFullYear(), todayM = today.getMonth(), todayD = today.getDate();
-
-    for (var i = startWeekday - 1; i >= 0; i--) {
-      var d = prevMonthDays - i;
-      html += '<button type="button" class="calendar-day other" data-day="' + d +
-        '" data-month="' + (m - 1) + '" data-year="' + y + '">' + d + '</button>';
-    }
-
-    for (var d2 = 1; d2 <= daysInMonth; d2++) {
-      var cls = 'calendar-day';
-      if (y === todayY && m === todayM && d2 === todayD) cls += ' today';
-      if (y === dpYear && m === dpMonth && d2 === dpDay) cls += ' selected';
-      html += '<button type="button" class="' + cls + '" data-day="' + d2 +
-        '" data-month="' + m + '" data-year="' + y + '">' + d2 + '</button>';
-    }
-
-    var total = startWeekday + daysInMonth;
-    var rows = Math.ceil(total / 7);
-    var remain = rows * 7 - total;
-    for (var d3 = 1; d3 <= remain; d3++) {
-      html += '<button type="button" class="calendar-day other" data-day="' + d3 +
-        '" data-month="' + (m + 1) + '" data-year="' + y + '">' + d3 + '</button>';
-    }
-
-    var grid = document.getElementById('calendarGrid');
-    grid.innerHTML = html;
-    grid.onclick = function (e) {
-      var btn = e.target.closest('button[data-day]');
-      if (!btn) return;
-      var dt = new Date(
-        parseInt(btn.getAttribute('data-year'), 10),
-        parseInt(btn.getAttribute('data-month'), 10),
-        parseInt(btn.getAttribute('data-day'), 10)
-      );
-      dpYear = dt.getFullYear();
-      dpMonth = dt.getMonth();
-      dpDay = dt.getDate();
-      dpViewYear = dpYear;
-      dpViewMonth = dpMonth;
-      updateDateDisplay();
-      renderCalendar();
-    };
-  }
-
-  function renderYearList() {
-    var startY = Math.max(1900, dpYear - 60);
-    var endY = Math.min(2200, dpYear + 40);
-    var html = '';
-    for (var y = startY; y <= endY; y++) {
-      var cls = 'year-item' + (y === dpYear ? ' selected' : '');
-      html += '<button type="button" class="' + cls + '" data-year="' + y + '">' + y + '</button>';
-    }
-    var el = document.getElementById('yearList');
-    el.innerHTML = html;
-    el.onclick = function (e) {
-      var btn = e.target.closest('button[data-year]');
-      if (!btn) return;
-      dpYear = parseInt(btn.getAttribute('data-year'), 10);
-      var maxDay = new Date(dpYear, dpMonth + 1, 0).getDate();
-      if (dpDay > maxDay) dpDay = maxDay;
-      dpViewYear = dpYear;
-      updateDateDisplay();
-      switchDateMode('calendar');
-      renderCalendar();
-    };
-    requestAnimationFrame(function () {
-      var sel = el.querySelector('.year-item.selected');
-      if (sel) el.scrollTop = Math.max(0, sel.offsetTop - el.clientHeight / 2 + sel.offsetHeight / 2);
-    });
-  }
-
-  function renderMonthList() {
-    var html = '';
-    for (var m = 0; m < 12; m++) {
-      var cls = 'month-item' + (m === dpMonth ? ' selected' : '');
-      html += '<button type="button" class="' + cls + '" data-month="' + m + '">' + (m + 1) + ' 月</button>';
-    }
-    var el = document.getElementById('monthList');
-    el.innerHTML = html;
-    el.onclick = function (e) {
-      var btn = e.target.closest('button[data-month]');
-      if (!btn) return;
-      dpMonth = parseInt(btn.getAttribute('data-month'), 10);
-      var maxDay = new Date(dpYear, dpMonth + 1, 0).getDate();
-      if (dpDay > maxDay) dpDay = maxDay;
-      dpViewMonth = dpMonth;
-      updateDateDisplay();
-      switchDateMode('calendar');
-      renderCalendar();
-    };
   }
 
   /* ---------- IndexedDB ---------- */
@@ -1511,6 +1006,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       });
     });
   }
+
   function idbGet(key) {
     return openDB().then(function (db) {
       return new Promise(function (resolve, reject) {
@@ -1521,6 +1017,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       });
     });
   }
+
   function idbDelete(key) {
     return openDB().then(function (db) {
       return new Promise(function (resolve, reject) {
@@ -1531,6 +1028,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       });
     });
   }
+
   function idbClear() {
     return openDB().then(function (db) {
       return new Promise(function (resolve, reject) {
@@ -1677,11 +1175,18 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
   /* ---------- 视图 ---------- */
 
+  function updateActionBar(v) {
+    var bar = document.getElementById('entryActions');
+    if (!bar) return;
+    bar.hidden = !(v === 'entry' && !shareMode && !!editingId);
+  }
+
   function showView(v, noScroll) {
     $$('.view').forEach(function (s) { s.classList.toggle('active', s.id === 'view-' + v); });
     $$('#tabbar button').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-view') === v);
     });
+    updateActionBar(v);
     if (v === 'trend') setTimeout(drawChart, 30);
     if (!noScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -2315,7 +1820,13 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     var cx = (t1.clientX + t2.clientX) / 2 - rect.left;
     var ratio = clamp((cx - g.padL) / g.cw, 0, 1);
 
-    gesture = { mode: 'pinch', d0: d, start0: g.start, span0: g.span, ratio: ratio };
+    gesture = {
+      mode: 'pinch',
+      d0: d,
+      start0: g.start,
+      span0: g.span,
+      ratio: ratio
+    };
     selectedIndex = -1;
     hideTip();
   }
@@ -2347,20 +1858,27 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         startPinch(e.touches[0], e.touches[1]);
       } else if (e.touches.length === 1) {
         var t = e.touches[0];
-        gesture = { mode: 'tap', x0: t.clientX, y0: t.clientY, start0: view.start, span0: view.span };
+        gesture = {
+          mode: 'tap',
+          x0: t.clientX, y0: t.clientY,
+          start0: view.start, span0: view.span
+        };
       }
     }, { passive: false });
 
     canvas.addEventListener('touchmove', function (e) {
       if (!chartGeom) return;
+
       if (e.touches.length === 2) {
         e.preventDefault();
         if (!gesture || gesture.mode !== 'pinch') startPinch(e.touches[0], e.touches[1]);
         else updatePinch(e.touches[0], e.touches[1]);
         return;
       }
+
       if (e.touches.length === 1 && gesture) {
         var t = e.touches[0];
+
         if (gesture.mode === 'tap') {
           var dx0 = t.clientX - gesture.x0;
           var dy0 = t.clientY - gesture.y0;
@@ -2373,6 +1891,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
             hideTip();
           }
         }
+
         if (gesture.mode === 'pan') {
           e.preventDefault();
           var g = chartGeom;
@@ -2546,7 +2065,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         editingId = null;
         $('#formTitle').textContent = '记一次';
         $('#submitBtn').textContent = '保存';
-        $('#cancelEdit').hidden = true;
+        $('#entryActions').hidden = true;
         toast('已保存修改');
       } else {
         records.push({
@@ -2578,8 +2097,8 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     editingId = id;
     resetImageState();
 
-    setDateValue(r.date);
-    setTimeValue(r.time || '00:00');
+    $('#date').value = r.date;
+    $('#time').value = r.time || '';
     $('#glucose').value = r.glucose != null ? r.glucose : '';
     $('#uric').value = r.uric != null ? r.uric : '';
     $('#gtype').value = r.gtype || '空腹';
@@ -2661,6 +2180,10 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     toast('已导出 JSON（含图片）');
   }
 
+  function sortAscForRecords() {
+    return records.slice().sort(function (a, b) { return keyOf(a).localeCompare(keyOf(b)); });
+  }
+
   function csvCell(v) {
     var s = String(v == null ? '' : v);
     return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -2698,10 +2221,12 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   function encodeSharePayload(list, name) {
     var slim = list.map(function (r) {
       return {
-        d: r.date, t: r.time || '',
+        d: r.date,
+        t: r.time || '',
         g: r.glucose != null ? r.glucose : null,
         u: r.uric != null ? r.uric : null,
-        y: r.gtype || '', n: r.note || ''
+        y: r.gtype || '',
+        n: r.note || ''
       };
     });
     var payload = { n: name || '', v: 1, r: slim };
@@ -2713,22 +2238,8 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  function safeDecodeURI(s) {
-    try { return decodeURIComponent(s); } catch (e) { return s; }
-  }
-
-  function normalizeBase64Url(s) {
-    var raw = String(s || '').replace(/\s/g, '');
-    var decoded = safeDecodeURI(raw);
-    if (decoded.indexOf('%') >= 0) {
-      var again = safeDecodeURI(decoded);
-      if (again !== decoded) decoded = again;
-    }
-    return decoded.replace(/-/g, '+').replace(/_/g, '/');
-  }
-
   function decodeSharePayload(encoded) {
-    var b64 = normalizeBase64Url(encoded);
+    var b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
     while (b64.length % 4) b64 += '=';
     var bin = atob(b64);
     var bytes = new Uint8Array(bin.length);
@@ -2756,9 +2267,11 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   }
 
   function showShareDialog(url) {
+    var dialog = document.getElementById('shareDialog');
     document.getElementById('shareUrl').value = url;
-    document.getElementById('shareDialog').hidden = false;
+    dialog.hidden = false;
   }
+
   function hideShareDialog() {
     document.getElementById('shareDialog').hidden = true;
   }
@@ -2774,52 +2287,39 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       ta.style.left = '-9999px';
       document.body.appendChild(ta);
       ta.select();
-      try { document.execCommand('copy'); resolve(); }
-      catch (e) { reject(e); }
+      try {
+        document.execCommand('copy');
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
       document.body.removeChild(ta);
     });
   }
 
   function checkShareHash() {
-    var encoded = null;
-
     var hash = location.hash || '';
-    if (hash.indexOf('#share=') === 0) {
-      encoded = hash.slice(7);
-    }
-
-    if (!encoded) {
-      var search = location.search || '';
-      var m = search.match(/[?&]share=([^&]+)/);
-      if (m) encoded = m[1];
-    }
-
-    if (!encoded) {
-      var idx = hash.indexOf('share=');
-      if (idx >= 0) {
-        encoded = hash.slice(idx + 6).split('&')[0];
-      }
-    }
-
-    if (!encoded) return false;
-
+    if (hash.indexOf('#share=') !== 0) return false;
     try {
+      var encoded = hash.slice(7);
       var payload = decodeSharePayload(encoded);
       if (!payload || !Array.isArray(payload.r)) return false;
-
       sharedRecords = payload.r.map(function (s) {
         return {
           id: 'share_' + uid(),
-          date: s.d, time: s.t || '00:00',
+          date: s.d,
+          time: s.t || '00:00',
           glucose: s.g != null && isFinite(s.g) ? s.g : null,
           uric: s.u != null && isFinite(s.u) ? s.u : null,
-          gtype: s.y || '空腹', note: s.n || '',
-          imageId: null, imageName: '', createdAt: 0
+          gtype: s.y || '空腹',
+          note: s.n || '',
+          imageId: null,
+          imageName: '',
+          createdAt: 0
         };
       }).filter(function (r) {
         return r.date && (r.glucose != null || r.uric != null);
       });
-
       if (!sharedRecords.length) return false;
       sharedOwner = payload.n || '';
       shareMode = true;
@@ -2832,14 +2332,17 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
   function enterShareMode() {
     document.body.classList.add('share-mode');
-    document.getElementById('shareBanner').hidden = false;
-    var t = sharedOwner ? sharedOwner + ' 分享的记录' : '分享的记录';
-    document.getElementById('shareBannerTitle').textContent = t;
+    var banner = document.getElementById('shareBanner');
+    banner.hidden = false;
+    var ownerText = sharedOwner ? sharedOwner + ' 分享的记录' : '分享的记录';
+    document.getElementById('shareBannerTitle').textContent = ownerText;
     document.getElementById('shareBannerSub').textContent = '共 ' + sharedRecords.length + ' 条 · 只读查看';
-    document.title = t + ' · 血糖 · 尿酸';
+    document.title = ownerText + ' · 血糖 · 尿酸';
+    updateActionBar('entry');
   }
 
   function exitShareMode() {
+    location.hash = '';
     location.replace(location.href.split('#')[0]);
   }
 
@@ -2857,16 +2360,25 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       var key = r.date + '|' + r.time + '|' + r.glucose + '|' + r.uric;
       if (seen[key]) { skipped++; return; }
       records.push({
-        id: uid(), date: r.date, time: r.time,
-        glucose: r.glucose, uric: r.uric, gtype: r.gtype, note: r.note,
-        imageId: null, imageName: '', createdAt: Date.now()
+        id: uid(),
+        date: r.date,
+        time: r.time,
+        glucose: r.glucose,
+        uric: r.uric,
+        gtype: r.gtype,
+        note: r.note,
+        imageId: null,
+        imageName: '',
+        createdAt: Date.now()
       });
       seen[key] = true;
       merged++;
     });
     persist();
     toast('已保存：新增 ' + merged + ' 条，跳过 ' + skipped + ' 条');
-    setTimeout(exitShareMode, 800);
+    setTimeout(function () {
+      exitShareMode();
+    }, 800);
   }
 
   /* ---------- 导入 ---------- */
@@ -2891,25 +2403,35 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
   function normalizeRecord(r) {
     if (!r || typeof r !== 'object') return null;
+
     var date = normDate(r.date || r['日期']);
     if (!date) return null;
+
     var time = normTime(r.time || r['时间']);
     var glucose = numOrNull(r.glucose != null ? r.glucose : (r['血糖'] != null ? r['血糖'] : r['血糖(mmol/L)']));
     var uric = numOrNull(r.uric != null ? r.uric : (r['尿酸'] != null ? r['尿酸'] : r['尿酸(μmol/L)']));
+
     if (glucose != null && (glucose <= 0 || glucose > 50)) glucose = null;
     if (uric != null && (uric <= 0 || uric > 2000)) uric = null;
     if (glucose == null && uric == null) return null;
+
     var gtype = String(r.gtype || r['血糖时段'] || r['测量时段'] || '空腹').trim() || '空腹';
     var note = String(r.note || r['备注'] || '').trim();
+
     var rec = {
-      id: r.id || uid(), date: date, time: time, glucose: glucose, uric: uric,
-      gtype: gtype, note: note, imageId: r.imageId || null,
-      imageName: r.imageName || '', createdAt: r.createdAt || Date.now()
+      id: r.id || uid(),
+      date: date, time: time, glucose: glucose, uric: uric,
+      gtype: gtype, note: note,
+      imageId: r.imageId || null,
+      imageName: r.imageName || '',
+      createdAt: r.createdAt || Date.now()
     };
+
     if (typeof r.image === 'string' && r.image.indexOf('data:image/') === 0) {
       rec._imageData = r.image;
       rec._imageName = r.imageName || '图片';
     }
+
     return rec;
   }
 
@@ -2946,8 +2468,16 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     var added = 0, skipped = 0;
     var addedList = [];
     var seenId = {}, seenSig = {};
-    function sig(r) { return [r.date, r.time, r.glucose, r.uric, r.gtype, r.note].join('|'); }
-    records.forEach(function (r) { seenId[r.id] = 1; seenSig[sig(r)] = 1; });
+
+    function sig(r) {
+      return [r.date, r.time, r.glucose, r.uric, r.gtype, r.note].join('|');
+    }
+
+    records.forEach(function (r) {
+      seenId[r.id] = 1;
+      seenSig[sig(r)] = 1;
+    });
+
     incoming.forEach(function (r) {
       if (seenId[r.id] || seenSig[sig(r)]) { skipped++; return; }
       records.push(r);
@@ -2956,13 +2486,18 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       addedList.push(r);
       added++;
     });
+
     return { added: added, skipped: skipped, addedList: addedList };
   }
 
   async function processImportedImages(list) {
     for (var i = 0; i < list.length; i++) {
       var r = list[i];
-      if (!r._imageData) { delete r._imageData; delete r._imageName; continue; }
+      if (!r._imageData) {
+        delete r._imageData;
+        delete r._imageName;
+        continue;
+      }
       try {
         var blob = dataURLToBlob(r._imageData);
         if (blob && blob.size > 0) {
@@ -2972,7 +2507,9 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
           r.imageId = id;
           r.imageName = name;
         }
-      } catch (err) { console.warn('导入图片失败：', err); }
+      } catch (err) {
+        console.warn('导入图片失败：', err);
+      }
       delete r._imageData;
       delete r._imageName;
     }
@@ -2982,23 +2519,28 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     if (shareMode) { alert('分享查看模式下不能导入'); e.target.value = ''; return; }
     var file = e.target.files && e.target.files[0];
     if (!file) return;
+
     var reader = new FileReader();
     reader.onload = function () {
       try {
         var text = String(reader.result || '').replace(/^\ufeff/, '');
         var trimmed = text.trim();
         var incoming;
+
         if (/\.json$/i.test(file.name) || trimmed.charAt(0) === '{' || trimmed.charAt(0) === '[') {
           incoming = parseJSONImport(text);
         } else {
           incoming = parseCSVImport(text);
         }
+
         if (!incoming.length) {
           alert('没有解析到有效记录，请检查文件内容。');
           e.target.value = '';
           return;
         }
+
         var res = mergeRecords(incoming);
+
         processImportedImages(res.addedList).then(function () {
           persist();
           resetTrendView();
@@ -3030,6 +2572,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     document.getElementById('imgViewerCaption').textContent = caption || '';
     viewer.hidden = false;
   }
+
   function closeImageViewer() {
     var viewer = document.getElementById('imgViewer');
     viewer.hidden = true;
@@ -3049,7 +2592,10 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
   function initPWA() {
     var offlineBar = document.getElementById('offlineBar');
-    function updateOnline() { if (offlineBar) offlineBar.hidden = navigator.onLine; }
+    function updateOnline() {
+      if (!offlineBar) return;
+      offlineBar.hidden = navigator.onLine;
+    }
     window.addEventListener('online', updateOnline);
     window.addEventListener('offline', updateOnline);
     updateOnline();
@@ -3058,6 +2604,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     var installBtn = document.getElementById('installBtn');
     var iosHint = document.getElementById('iosHint');
     var installTip = document.getElementById('installTip');
+
     var isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
       window.navigator.standalone === true;
     var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -3103,6 +2650,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
     var hadController = !!navigator.serviceWorker.controller;
     var refreshing = false;
+
     navigator.serviceWorker.addEventListener('controllerchange', function () {
       if (!hadController || refreshing) return;
       refreshing = true;
@@ -3113,6 +2661,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function (reg) {
         var updateBar = document.getElementById('updateBar');
         var updateBtn = document.getElementById('updateBtn');
+
         function showUpdate(worker) {
           if (!updateBar || !worker) return;
           updateBar.hidden = false;
@@ -3121,7 +2670,9 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
             updateBar.hidden = true;
           };
         }
+
         if (reg.waiting && navigator.serviceWorker.controller) showUpdate(reg.waiting);
+
         reg.addEventListener('updatefound', function () {
           var nw = reg.installing;
           if (!nw) return;
@@ -3129,6 +2680,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
             if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdate(nw);
           });
         });
+
         document.addEventListener('visibilitychange', function () {
           if (document.visibilityState === 'visible') reg.update().catch(function () {});
         });
@@ -3142,11 +2694,11 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
   function init() {
     load();
+
     var isShare = checkShareHash();
 
-    // 初始化日期/时间
-    setDateValue(todayStr());
-    setTimeValue(nowTime());
+    $('#date').value = todayStr();
+    $('#time').value = nowTime();
 
     var ownerInput = $('#ownerName');
     if (ownerInput) ownerInput.value = getOwnerName();
@@ -3162,41 +2714,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       drawChart();
     });
 
-    // 日期/时间字段点击
-    $('#dateFieldBtn').addEventListener('click', function () {
-      if (shareMode) return;
-      openDatePicker();
-    });
-    $('#timeFieldBtn').addEventListener('click', function () {
-      if (shareMode) return;
-      openTimePicker();
-    });
-
-    // 弹窗关闭
-    document.addEventListener('click', function (e) {
-      var t = e.target;
-      if (!t || !t.closest) return;
-      var close = t.closest('[data-close]');
-      if (close) {
-        var which = close.getAttribute('data-close');
-        if (which === 'time') document.getElementById('timeModal').hidden = true;
-        if (which === 'date') document.getElementById('dateModal').hidden = true;
-      }
-    });
-
-    // 时间弹窗底部按钮
-    document.getElementById('timeConfirmBtn').addEventListener('click', confirmTime);
-    document.getElementById('timeNowBtn').addEventListener('click', function () {
-      setTimeValue(nowTime());
-      document.getElementById('timeModal').hidden = true;
-    });
-
-    // 日期弹窗底部按钮
-    document.getElementById('dateConfirmBtn').addEventListener('click', confirmDate);
-    // 日期弹窗初始化
-    initDatePicker();
-
-    // 我的名字
     var saveOwnerBtn = $('#saveOwnerName');
     if (saveOwnerBtn) {
       saveOwnerBtn.addEventListener('click', function () {
@@ -3206,7 +2723,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       });
     }
 
-    // 分享按钮
     var shareBtn = $('#shareBtn');
     if (shareBtn) {
       shareBtn.addEventListener('click', function () {
@@ -3219,12 +2735,15 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     if (shareCopyBtn) {
       shareCopyBtn.addEventListener('click', function () {
         var ta = document.getElementById('shareUrl');
+        var text = ta.value;
         ta.select();
-        copyToClipboard(ta.value).then(function () {
+        copyToClipboard(text).then(function () {
           toast('链接已复制，粘贴到微信发送');
           shareCopyBtn.textContent = '已复制';
           setTimeout(function () { shareCopyBtn.textContent = '复制链接'; }, 1600);
-        }).catch(function () { toast('请手动长按选中复制'); });
+        }).catch(function () {
+          toast('请手动长按选中复制');
+        });
       });
     }
     var shareCloseBtn = $('#shareClose');
@@ -3241,11 +2760,8 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     var shareExitBtn = $('#shareExit');
     if (shareExitBtn) shareExitBtn.addEventListener('click', exitShareMode);
 
-    // 图片选择
-    $('#imageInput').addEventListener('change', function (e) {
-      if (shareMode) { e.target.value = ''; return; }
-      var file = e.target.files && e.target.files[0];
-      e.target.value = '';
+    function handleImageFile(file) {
+      if (shareMode) return;
       if (!file) return;
       if (!/^image\//.test(file.type)) { alert('请选择图片文件'); return; }
       if (file.size > 25 * 1024 * 1024) { alert('图片太大，请选择 25MB 以内的图片'); return; }
@@ -3258,6 +2774,18 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       }).catch(function (err) {
         alert('图片处理失败：' + err.message);
       });
+    }
+
+    $('#cameraInput').addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (file) handleImageFile(file);
+    });
+
+    $('#albumInput').addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (file) handleImageFile(file);
     });
 
     $('#removeImage').addEventListener('click', function () {
@@ -3278,13 +2806,13 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       }
     });
 
-    // 记录操作
     document.addEventListener('click', function (e) {
       if (shareMode) return;
       var btn = e.target.closest ? e.target.closest('button[data-act]') : null;
       if (!btn) return;
       var id = btn.getAttribute('data-id');
       var act = btn.getAttribute('data-act');
+
       if (act === 'del') {
         var r = records.filter(function (x) { return x.id === id; })[0];
         if (!r) return;
@@ -3303,14 +2831,19 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       }
     });
 
-    // 点击图片打开查看器
     document.addEventListener('click', function (e) {
       var target = e.target;
       if (!target || !target.closest) return;
       var recImg = target.closest('img[data-img-id]');
-      if (recImg && recImg.src) { openImageViewer(recImg.src, recImg.alt); return; }
+      if (recImg && recImg.src) {
+        openImageViewer(recImg.src, recImg.alt);
+        return;
+      }
       var tipImg = target.closest('.tip-img');
-      if (tipImg && tipImg.src) { openImageViewer(tipImg.src, tipImg.alt); return; }
+      if (tipImg && tipImg.src) {
+        openImageViewer(tipImg.src, tipImg.alt);
+        return;
+      }
     });
 
     document.getElementById('imgViewerClose').addEventListener('click', closeImageViewer);
@@ -3387,4 +2920,3 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 </script>
 </body>
 </html>
-
