@@ -29,19 +29,6 @@ body{
 }
 .app{max-width:760px;margin:0 auto;padding:0 14px}
 
-.sticky-top{
-  position:sticky;top:0;z-index:50;
-  background:var(--bg);
-  margin:0 -14px;
-  padding:0 14px;
-  border-bottom:1px solid transparent;
-  transition:border-color .15s, box-shadow .15s;
-}
-.sticky-top.is-scrolled{
-  border-bottom-color:var(--line);
-  box-shadow:0 2px 10px rgba(20,30,50,.06);
-}
-
 .status-bar{
   position:fixed;left:0;right:0;top:0;z-index:80;
   background:#b45309;color:#fff;font-size:14px;text-align:center;
@@ -62,7 +49,7 @@ body{
 }
 
 .share-banner{
-  position:sticky;top:80px;z-index:45;
+  position:sticky;top:10px;z-index:55;
   background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);
   color:#fff;border-radius:14px;padding:14px 16px;
   margin-bottom:14px;
@@ -84,19 +71,9 @@ body{
 body.share-mode .nav-entry,
 body.share-mode .nav-data{display:none}
 
-.topbar{padding:16px 4px 10px}
-.topbar h1{margin:0;font-size:20px;letter-spacing:.3px}
+.topbar{padding:20px 4px 12px}
+.topbar h1{margin:0;font-size:21px;letter-spacing:.3px}
 .topbar p{margin:4px 0 0;font-size:13px;color:var(--muted)}
-
-.action-bar{
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:10px;
-  padding:8px 0 10px;
-}
-.action-bar[hidden]{display:none}
-.action-bar .btn-inline{min-height:42px;padding:0 18px;font-size:15px}
 
 .tabbar{
   position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;background:#fff;
@@ -121,34 +98,16 @@ body.share-mode .nav-data{display:none}
 .view.active{display:block;animation:fade .16s ease-out}
 @keyframes fade{from{opacity:.35;transform:translateY(3px)}to{opacity:1;transform:none}}
 
-.field{display:flex;flex-direction:column;gap:6px;min-width:0}
-.field>span{font-size:14px;color:#5a6675;font-weight:500;white-space:nowrap}
+.field{display:flex;flex-direction:column;gap:6px}
+.field>span{font-size:14px;color:#5a6675;font-weight:500}
 input,select{
   font-family:inherit;font-size:17px;min-height:52px;padding:11px 13px;width:100%;
   border:1.5px solid var(--line);border-radius:12px;background:#fff;color:inherit;
 }
 input::placeholder{color:#a9b3c1}
 input:focus,select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
-input[readonly]{cursor:pointer}
-
-/* 强制两列，防止被系统大字体撑破 */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.grid2 .field>span{font-size:13px}
-.grid2 input,.grid2 select{
-  padding:10px 4px;
-  font-size:14px;
-  min-height:50px;
-  text-align:center;
-}
-.grid2 .picker-field{
-  padding:10px 10px;
-  font-size:14px;
-  min-height:50px;
-}
-
-#glucose{background-color:#ffe8e8 !important;border-color:#f5b5b5;text-align:left;padding-left:10px}
-#uric{background-color:#fff8cc !important;border-color:#ecd97a;text-align:left;padding-left:10px}
-#glucose:focus,#uric:focus{box-shadow:0 0 0 3px rgba(37,99,235,.10)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:400px){.grid2{grid-template-columns:1fr}}
 
 /* 自定义日期/时间字段按钮 */
 .picker-field{
@@ -186,20 +145,24 @@ input[readonly]{cursor:pointer}
 }
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 
+/* 顶部居中显示区 */
 .picker-display{
   display:flex;align-items:center;justify-content:center;
   gap:2px;padding:6px 0 16px;
   flex-wrap:nowrap;
 }
+
 .picker-big{
   font-size:40px;font-weight:700;color:var(--pri);
   font-variant-numeric:tabular-nums;
   min-width:62px;text-align:center;line-height:1.1;
 }
+
 .picker-colon{
   font-size:34px;font-weight:700;color:var(--pri);
   margin:0 2px;line-height:1.1;
 }
+
 .picker-digit-btn{
   font-family:inherit;
   font-size:26px;font-weight:700;color:var(--pri);
@@ -208,10 +171,12 @@ input[readonly]{cursor:pointer}
   transition:background .15s;
 }
 .picker-digit-btn:active{background:var(--pri-soft)}
+
 .picker-unit{
   font-size:15px;color:var(--muted);margin:0 6px 0 1px;
 }
 
+/* 滚轮 */
 .picker-wheels{
   position:relative;
   display:flex;gap:20px;justify-content:center;
@@ -237,6 +202,7 @@ input[readonly]{cursor:pointer}
   overscroll-behavior:contain;
 }
 .picker-wheel::-webkit-scrollbar{display:none}
+
 .wheel-item{
   height:44px;
   display:flex;align-items:center;justify-content:center;
@@ -246,6 +212,7 @@ input[readonly]{cursor:pointer}
   user-select:none;
 }
 
+/* 底部 3 按钮一行 */
 .picker-actions{
   display:flex;gap:10px;margin-top:16px;
 }
@@ -264,8 +231,12 @@ input[readonly]{cursor:pointer}
   background:var(--pri);border-color:var(--pri);color:#fff;
 }
 
+/* 日期日历 */
 .picker-body{min-height:290px;position:relative}
-.calendar-view,.year-list-view,.month-list-view{animation:fade .15s}
+
+.calendar-view,.year-list-view,.month-list-view{
+  animation:fade .15s;
+}
 .calendar-view[hidden],
 .year-list-view[hidden],
 .month-list-view[hidden]{display:none}
@@ -285,6 +256,7 @@ input[readonly]{cursor:pointer}
   padding:0;
 }
 .calendar-arrow:active{background:#e8eef8}
+
 .calendar-weekdays{
   display:grid;grid-template-columns:repeat(7,1fr);
   text-align:center;font-size:12px;color:var(--muted);
@@ -309,6 +281,7 @@ input[readonly]{cursor:pointer}
 .calendar-day.selected:active{background:#1d4ed8}
 .calendar-day.other{color:#c3cddb}
 
+/* 年份 / 月份 网格 */
 .year-list,.month-list{
   display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
   padding:10px 0;
@@ -331,9 +304,9 @@ input[readonly]{cursor:pointer}
 .image-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .img-add{
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  min-height:52px;padding:0 16px;border-radius:12px;border:1.5px dashed #c3cddb;
+  min-height:52px;padding:0 18px;border-radius:12px;border:1.5px dashed #c3cddb;
   background:#f8fafd;color:#435063;font-size:16px;cursor:pointer;
-  position:relative;overflow:hidden;flex:1 1 120px;
+  position:relative;overflow:hidden;flex:1 1 auto;
 }
 .img-add input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .img-preview{position:relative;width:76px;height:76px;border-radius:12px;overflow:hidden;
@@ -346,9 +319,6 @@ input[readonly]{cursor:pointer}
   display:flex;align-items:center;justify-content:center;padding:0;
 }
 
-.save-row{margin-top:4px}
-.save-row .btn{min-height:54px;font-size:17px}
-
 .btn{
   font-family:inherit;font-size:17px;font-weight:600;min-height:54px;padding:0 18px;width:100%;
   border-radius:13px;border:1.5px solid var(--line);background:#fff;color:var(--txt);
@@ -360,14 +330,6 @@ input[readonly]{cursor:pointer}
 .btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}
 .btn.ghost{background:#f6f9fd}
 .btn.danger{color:var(--bad);border-color:#f6cccc;background:#fff}
-.btn-inline{
-  width:auto;
-  min-height:44px;
-  padding:0 18px;
-  font-size:15px;
-  flex-shrink:0;
-}
-
 .btn-row{display:grid;gap:10px;margin-top:4px}
 @media(min-width:520px){.btn-row.two{grid-template-columns:1fr 1fr}}
 .file-btn{position:relative;overflow:hidden}
@@ -489,49 +451,9 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 .dialog-actions{display:flex;gap:10px;margin-top:14px}
 .dialog-actions .btn{flex:1;min-height:48px;font-size:16px}
 
-.numpad-overlay{
-  position:fixed;inset:0;z-index:135;background:rgba(8,12,20,.55);
-  display:flex;align-items:flex-end;justify-content:center;
-}
-.numpad-overlay[hidden]{display:none}
-.numpad{
-  width:100%;max-width:520px;background:#fff;
-  border-radius:20px 20px 0 0;
-  padding:14px 14px calc(14px + env(safe-area-inset-bottom));
-  box-shadow:0 -10px 40px rgba(10,20,40,.25);
-  animation:numpad-in .2s ease-out;
-  max-height:92vh;overflow-y:auto;
-}
-@keyframes numpad-in{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.numpad-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.numpad-title{font-size:16px;font-weight:700}
-.numpad-close{width:36px;height:36px;border-radius:50%;border:0;background:#f1f5fa;color:#5a6675;font-size:20px;cursor:pointer;line-height:1}
-.numpad-display{
-  text-align:center;font-size:42px;font-weight:800;color:#182230;
-  padding:6px 0 8px;min-height:62px;line-height:1.1;
-  border-bottom:1px solid var(--line);margin-bottom:10px;
-  font-variant-numeric:tabular-nums;
-}
-.numpad-display .unit{font-size:13px;font-weight:500;color:var(--muted);margin-left:5px}
-.numpad-display.empty{color:#c3cddb}
-.numpad-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
-.numpad-quick button{
-  min-height:42px;border-radius:10px;border:1.5px solid var(--line);
-  background:#f8fafd;color:#435063;font-size:15px;font-weight:600;cursor:pointer;
-}
-.numpad-quick button.active{background:var(--pri-soft);border-color:var(--pri);color:var(--pri)}
-.numpad-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
-.numpad-keys button{
-  min-height:52px;border-radius:12px;border:0;background:#f1f5fa;
-  color:#182230;font-size:23px;font-weight:600;cursor:pointer;
-}
-.numpad-keys button:active{background:#e3e9f1}
-.numpad-keys button.func{background:#eef2f7;color:#5a6675;font-size:18px}
-.numpad-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:10px}
-.numpad-actions .btn{min-height:50px}
-
 .lv-low{color:var(--low)} .lv-ok{color:var(--ok)} .lv-warn{color:var(--warn)}
 .lv-high{color:var(--bad)} .lv-severe{color:var(--severe)}
+
 .badge{display:inline-block;font-size:12px;font-weight:600;line-height:1.3;
   padding:2px 7px;border-radius:6px;margin-left:6px;vertical-align:2px;white-space:nowrap}
 .badge.lv-low{background:#e8f0ff;color:#2563eb}
@@ -551,10 +473,9 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 @media(min-width:760px){
   body{padding:12px 0 28px}
   .app{padding:0 20px}
-  .sticky-top{margin:0 -20px;padding:0 20px}
-  .topbar{padding:10px 4px 8px}
+  .topbar{padding:8px 4px 14px}
   .tabbar{
-    position:sticky;top:0;bottom:auto;border:1px solid var(--line);
+    position:sticky;top:10px;bottom:auto;border:1px solid var(--line);
     border-radius:14px;padding-bottom:0;box-shadow:0 4px 16px rgba(20,30,50,.06);
     margin-bottom:16px;
   }
@@ -564,8 +485,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   .chart-wrap{height:280px}
   .update-bar{bottom:20px;left:auto;right:20px;max-width:380px}
   .share-banner{top:0}
-  .numpad{max-width:440px;border-radius:20px;margin-bottom:20px}
-  .numpad-overlay{align-items:center}
   .picker-modal{align-items:center}
   .picker-panel{border-radius:22px;padding-bottom:18px}
 }
@@ -582,16 +501,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
 <div class="app">
 
-  <div class="sticky-top" id="stickyTop">
-    <header class="topbar">
-      <h1>血糖 · 尿酸 记录本</h1>
-      <p>数据只保存在本机，离线也能用</p>
-    </header>
-    <div class="action-bar" id="entryActions" hidden>
-      <button type="button" class="btn ghost btn-inline" id="cancelEdit">取消修改</button>
-    </div>
-  </div>
-
   <div id="shareBanner" class="share-banner" hidden>
     <div class="share-banner-info">
       <span class="share-banner-icon">👤</span>
@@ -605,6 +514,11 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       <button type="button" class="mini" id="shareExit">退出</button>
     </div>
   </div>
+
+  <header class="topbar">
+    <h1>血糖 · 尿酸 记录本</h1>
+    <p>数据只保存在本机，离线也能用</p>
+  </header>
 
   <nav class="tabbar" id="tabbar">
     <button type="button" data-view="entry" class="nav-entry active"><span class="ico">✍️</span>记录</button>
@@ -637,17 +551,10 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
               <input type="hidden" id="time" value="08:30">
             </div>
           </div>
-
           <div class="grid2">
             <label class="field"><span>血糖（mmol/L）</span>
-              <input type="text" id="glucose" readonly inputmode="none" placeholder="点击输入">
+              <input type="number" id="glucose" inputmode="decimal" step="0.1" min="0" max="50" placeholder="比如 6.2">
             </label>
-            <label class="field"><span>尿酸（μmol/L）</span>
-              <input type="text" id="uric" readonly inputmode="none" placeholder="点击输入">
-            </label>
-          </div>
-
-          <div class="grid2">
             <label class="field"><span>测量时段</span>
               <select id="gtype">
                 <option>空腹</option>
@@ -657,8 +564,13 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
                 <option>随机</option>
               </select>
             </label>
+          </div>
+          <div class="grid2">
+            <label class="field"><span>尿酸（μmol/L）</span>
+              <input type="number" id="uric" inputmode="decimal" step="1" min="0" max="2000" placeholder="比如 420">
+            </label>
             <label class="field"><span>备注（选填）</span>
-              <input type="text" id="note" maxlength="60" placeholder="吃了面条">
+              <input type="text" id="note" maxlength="60" placeholder="比如 吃了面条">
             </label>
           </div>
 
@@ -666,24 +578,22 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
             <span>图片备注（选填）</span>
             <div class="image-picker">
               <label class="img-add">
-                <input type="file" id="cameraInput" accept="image/*" capture="environment">
-                <span>📷 拍照</span>
-              </label>
-              <label class="img-add">
-                <input type="file" id="albumInput" accept="image/*">
-                <span>🖼 相册</span>
+                <input type="file" id="imageInput" accept="image/*">
+                <span>＋ 添加图片</span>
               </label>
               <div id="imagePreview" class="img-preview" hidden>
                 <img id="previewImg" alt="预览">
                 <button type="button" id="removeImage" class="img-remove" aria-label="移除图片">×</button>
               </div>
             </div>
-            <p class="tip" id="imageTip">拍化验单或选相册，图片会压缩后保存在本机，不会上传。</p>
+            <p class="tip" id="imageTip">图片会压缩后保存在本机，不会上传；可拍照或从相册选择。</p>
           </div>
 
-          <div class="save-row">
-            <button type="submit" form="recordForm" class="btn primary" id="submitBtn">保存</button>
+          <div class="btn-row two">
+            <button type="submit" class="btn primary" id="submitBtn">保存</button>
+            <button type="button" class="btn ghost" id="cancelEdit" hidden>取消修改</button>
           </div>
+          <p class="tip">血糖和尿酸至少填一项。</p>
         </form>
       </div>
 
@@ -875,35 +785,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   </div>
 </div>
 
-<div id="numPadOverlay" class="numpad-overlay" hidden>
-  <div class="numpad">
-    <div class="numpad-head">
-      <span class="numpad-title" id="numPadTitle">血糖</span>
-      <button type="button" class="numpad-close" id="numPadClose" aria-label="关闭">×</button>
-    </div>
-    <div class="numpad-display empty" id="numPadDisplay">--</div>
-    <div class="numpad-quick" id="numPadQuick"></div>
-    <div class="numpad-keys" id="numPadKeys">
-      <button type="button" data-key="1">1</button>
-      <button type="button" data-key="2">2</button>
-      <button type="button" data-key="3">3</button>
-      <button type="button" data-key="4">4</button>
-      <button type="button" data-key="5">5</button>
-      <button type="button" data-key="6">6</button>
-      <button type="button" data-key="7">7</button>
-      <button type="button" data-key="8">8</button>
-      <button type="button" data-key="9">9</button>
-      <button type="button" data-key="." class="func" id="numPadDot">.</button>
-      <button type="button" data-key="0">0</button>
-      <button type="button" data-key="del" class="func">⌫</button>
-    </div>
-    <div class="numpad-actions">
-      <button type="button" class="btn" id="numPadCancel">取消</button>
-      <button type="button" class="btn primary" id="numPadOk">确定</button>
-    </div>
-  </div>
-</div>
-
 <script>
 (function () {
   'use strict';
@@ -934,17 +815,13 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   var sharedRecords = [];
   var sharedOwner = '';
 
-  var numPadTarget = null;
-  var numPadValue = '';
-  var numPadQuickMode = false;
-  var numPadQuickPressCount = 0;
-
   // Picker 状态
-  var dpYear, dpMonth, dpDay;
-  var dpViewYear, dpViewMonth;
-  var dpMode = 'calendar';
-  var dpInited = false;
+  var dpYear, dpMonth, dpDay; // 日期选择器当前选择
+  var dpViewYear, dpViewMonth; // 日历视图显示的月份
+  var dpMode = 'calendar'; // calendar | year | month
+
   var WHEEL_ITEM_H = 44;
+  var WHEEL_PAD = 88;
 
   var $ = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
@@ -1026,458 +903,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   }
   function setOwnerName(name) {
     try { localStorage.setItem(OWNER_KEY, name); } catch (e) {}
-  }
-
-  /* ---------- 数字键盘 ---------- */
-
-  var NUMPAD_CONFIG = {
-    glucose: {
-      title: '血糖（mmol/L）', unit: 'mmol/L',
-      maxLen: 4, allowDecimal: true, decMax: 1,
-      quick: ['4.0','5.0','6.0','7.0','8.0','9.0','10.0','11.0','12.0','13.0','14.0','15.0'],
-      min: 1, max: 50
-    },
-    uric: {
-      title: '尿酸（μmol/L）', unit: 'μmol/L',
-      maxLen: 4, allowDecimal: false, decMax: 0,
-      quick: ['300','350','400','450','500','550','600','650','700','750','800','850'],
-      min: 1, max: 2000
-    }
-  };
-
-  function openNumPad(target) {
-    if (shareMode) return;
-    numPadTarget = target;
-    var cfg = NUMPAD_CONFIG[target];
-    if (!cfg) return;
-
-    var cur = $('#' + target).value;
-    numPadValue = cur ? String(cur) : '';
-    numPadQuickMode = false;
-    numPadQuickPressCount = 0;
-
-    $('#numPadTitle').textContent = cfg.title;
-    $('#numPadDot').style.visibility = cfg.allowDecimal ? 'visible' : 'hidden';
-
-    var quickEl = $('#numPadQuick');
-    quickEl.innerHTML = cfg.quick.map(function (q) {
-      var active = (String(q) === numPadValue) ? ' active' : '';
-      return '<button type="button" data-quick="' + q + '" class="' + active + '">' + q + '</button>';
-    }).join('');
-
-    renderNumPadDisplay();
-    $('#numPadOverlay').hidden = false;
-  }
-
-  function closeNumPad() {
-    $('#numPadOverlay').hidden = true;
-    numPadTarget = null;
-    numPadValue = '';
-    numPadQuickMode = false;
-    numPadQuickPressCount = 0;
-  }
-
-  function renderNumPadDisplay() {
-    if (!numPadTarget) return;
-    var cfg = NUMPAD_CONFIG[numPadTarget];
-    var el = $('#numPadDisplay');
-    if (numPadValue === '' || numPadValue === '.') {
-      el.innerHTML = '--<span class="unit">' + cfg.unit + '</span>';
-      el.classList.add('empty');
-    } else {
-      el.innerHTML = esc(numPadValue) + '<span class="unit">' + cfg.unit + '</span>';
-      el.classList.remove('empty');
-    }
-    $$('#numPadQuick button').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-quick') === numPadValue);
-    });
-  }
-
-  function numPadInput(key) {
-    if (!numPadTarget) return;
-    var cfg = NUMPAD_CONFIG[numPadTarget];
-
-    if (numPadQuickMode) {
-      if (key === 'del') {
-        numPadQuickMode = false;
-        numPadQuickPressCount = 0;
-        numPadValue = numPadValue.slice(0, -1);
-        renderNumPadDisplay();
-        return;
-      }
-      if (key === '.') return;
-      if (/^[0-9]$/.test(key)) {
-        if (numPadTarget === 'glucose') {
-          var dot = numPadValue.indexOf('.');
-          if (dot >= 0) {
-            numPadValue = numPadValue.slice(0, dot + 1) + key;
-            renderNumPadDisplay();
-            return;
-          }
-          numPadQuickMode = false;
-          numPadQuickPressCount = 0;
-        } else if (numPadTarget === 'uric') {
-          if (numPadValue.length === 3) {
-            if (numPadQuickPressCount === 0) {
-              numPadValue = numPadValue.charAt(0) + key + numPadValue.charAt(2);
-              numPadQuickPressCount = 1;
-              renderNumPadDisplay();
-              return;
-            }
-            numPadValue = numPadValue.slice(0, 2) + key;
-            numPadQuickPressCount = 2;
-            renderNumPadDisplay();
-            return;
-          }
-          numPadQuickMode = false;
-          numPadQuickPressCount = 0;
-        }
-      }
-    }
-
-    if (key === 'del') {
-      numPadValue = numPadValue.slice(0, -1);
-    } else if (key === '.') {
-      if (!cfg.allowDecimal) return;
-      if (numPadValue.indexOf('.') >= 0) return;
-      if (numPadValue === '') numPadValue = '0';
-      numPadValue += '.';
-    } else {
-      if (numPadValue.indexOf('.') >= 0) {
-        var parts = numPadValue.split('.');
-        if (parts[1].length >= cfg.decMax) return;
-      } else {
-        if (numPadValue.length >= cfg.maxLen) return;
-        if (numPadValue === '0') numPadValue = '';
-      }
-      numPadValue += key;
-    }
-    renderNumPadDisplay();
-  }
-
-  function confirmNumPad() {
-    if (!numPadTarget) return;
-    var cfg = NUMPAD_CONFIG[numPadTarget];
-    var v = numPadValue;
-    if (v === '' || v === '.') {
-      $('#' + numPadTarget).value = '';
-      closeNumPad();
-      return;
-    }
-    var n = parseFloat(v);
-    if (!isFinite(n) || n <= 0 || n > cfg.max) {
-      alert(cfg.title + ' 请输入 ' + cfg.min + ' ~ ' + cfg.max + ' 之间的数值');
-      return;
-    }
-    $('#' + numPadTarget).value = v;
-    closeNumPad();
-  }
-
-  function initNumPad() {
-    ['glucose', 'uric'].forEach(function (id) {
-      var el = $('#' + id);
-      if (!el) return;
-      el.addEventListener('click', function () { openNumPad(id); });
-      el.addEventListener('focus', function () { this.blur(); });
-    });
-
-    $('#numPadClose').addEventListener('click', closeNumPad);
-    $('#numPadCancel').addEventListener('click', closeNumPad);
-    $('#numPadOk').addEventListener('click', confirmNumPad);
-    $('#numPadOverlay').addEventListener('click', function (e) {
-      if (e.target === this) closeNumPad();
-    });
-
-    $('#numPadKeys').addEventListener('click', function (e) {
-      var b = e.target.closest ? e.target.closest('button[data-key]') : null;
-      if (!b) return;
-      numPadInput(b.getAttribute('data-key'));
-    });
-
-    $('#numPadQuick').addEventListener('click', function (e) {
-      var b = e.target.closest ? e.target.closest('button[data-quick]') : null;
-      if (!b) return;
-      numPadValue = b.getAttribute('data-quick');
-      numPadQuickMode = true;
-      numPadQuickPressCount = 0;
-      renderNumPadDisplay();
-    });
-
-    document.addEventListener('keydown', function (e) {
-      if (!numPadTarget) return;
-      if (e.key === 'Escape') { closeNumPad(); return; }
-      if (e.key === 'Enter') { confirmNumPad(); return; }
-      if (/^[0-9]$/.test(e.key)) { numPadInput(e.key); return; }
-      if (e.key === '.' || e.key === '。') { numPadInput('.'); return; }
-      if (e.key === 'Backspace') { numPadInput('del'); return; }
-    });
-  }
-
-  /* ---------- 时间选择器 ---------- */
-
-  function closeAllModals() {
-    document.getElementById('timeModal').hidden = true;
-    document.getElementById('dateModal').hidden = true;
-  }
-
-  function buildWheel(el, count, padLeft) {
-    var html = '';
-    for (var i = 0; i < count; i++) {
-      var label = padLeft ? String(i).padStart(2, '0') : String(i);
-      html += '<div class="wheel-item">' + label + '</div>';
-    }
-    el.innerHTML = html;
-  }
-
-  function wheelIndex(el) {
-    return clamp(Math.round(el.scrollTop / WHEEL_ITEM_H), 0, Math.floor((el.children.length) - 1));
-  }
-
-  function initTimeWheels() {
-    var hourWheel = document.getElementById('hourWheel');
-    var minuteWheel = document.getElementById('minuteWheel');
-    if (hourWheel.children.length) return;
-
-    buildWheel(hourWheel, 24, true);
-    buildWheel(minuteWheel, 60, true);
-
-    var updateHour = function () {
-      document.getElementById('pickerHourDisplay').textContent = p2(wheelIndex(hourWheel));
-    };
-    var updateMinute = function () {
-      document.getElementById('pickerMinuteDisplay').textContent = p2(wheelIndex(minuteWheel));
-    };
-
-    var tick;
-    function onScroll(fn) {
-      return function () {
-        cancelAnimationFrame(tick);
-        tick = requestAnimationFrame(fn);
-      };
-    }
-
-    hourWheel.addEventListener('scroll', onScroll(updateHour), { passive: true });
-    minuteWheel.addEventListener('scroll', onScroll(updateMinute), { passive: true });
-  }
-
-  function openTimePicker() {
-    closeAllModals();
-    initTimeWheels();
-
-    var current = $('#time').value || nowTime();
-    var parts = current.split(':');
-    var hour = clamp(parseInt(parts[0], 10) || 0, 0, 23);
-    var minute = clamp(parseInt(parts[1], 10) || 0, 0, 59);
-
-    document.getElementById('pickerHourDisplay').textContent = p2(hour);
-    document.getElementById('pickerMinuteDisplay').textContent = p2(minute);
-    document.getElementById('timeModal').hidden = false;
-
-    requestAnimationFrame(function () {
-      document.getElementById('hourWheel').scrollTop = hour * WHEEL_ITEM_H;
-      document.getElementById('minuteWheel').scrollTop = minute * WHEEL_ITEM_H;
-    });
-  }
-
-  function confirmTime() {
-    var hour = parseInt(document.getElementById('pickerHourDisplay').textContent, 10) || 0;
-    var minute = parseInt(document.getElementById('pickerMinuteDisplay').textContent, 10) || 0;
-    setTimeValue(p2(hour) + ':' + p2(minute));
-    document.getElementById('timeModal').hidden = true;
-  }
-
-  function setTimeValue(str) {
-    $('#time').value = str || '';
-    $('#timeFieldText').textContent = str || '选择时间';
-  }
-
-  /* ---------- 日期选择器 ---------- */
-
-  function initDatePicker() {
-    if (dpInited) return;
-    dpInited = true;
-
-    var today = new Date();
-    dpYear = today.getFullYear();
-    dpMonth = today.getMonth();
-    dpDay = today.getDate();
-    dpViewYear = dpYear;
-    dpViewMonth = dpMonth;
-
-    document.getElementById('yearBtn').addEventListener('click', function () { switchDateMode('year'); });
-    document.getElementById('monthBtn').addEventListener('click', function () { switchDateMode('month'); });
-    document.getElementById('dayBtn').addEventListener('click', function () { switchDateMode('calendar'); });
-
-    document.getElementById('prevMonthBtn').addEventListener('click', function () {
-      dpViewMonth--;
-      if (dpViewMonth < 0) { dpViewMonth = 11; dpViewYear--; }
-      renderCalendar();
-    });
-    document.getElementById('nextMonthBtn').addEventListener('click', function () {
-      dpViewMonth++;
-      if (dpViewMonth > 11) { dpViewMonth = 0; dpViewYear++; }
-      renderCalendar();
-    });
-
-    document.getElementById('dateTodayBtn').addEventListener('click', function () {
-      var t = new Date();
-      dpYear = t.getFullYear();
-      dpMonth = t.getMonth();
-      dpDay = t.getDate();
-      dpViewYear = dpYear;
-      dpViewMonth = dpMonth;
-      updateDateDisplay();
-      renderCalendar();
-    });
-    document.getElementById('dateConfirmBtn').addEventListener('click', confirmDate);
-  }
-
-  function switchDateMode(mode) {
-    dpMode = mode;
-    document.getElementById('calendarView').hidden = (mode !== 'calendar');
-    document.getElementById('yearListView').hidden = (mode !== 'year');
-    document.getElementById('monthListView').hidden = (mode !== 'month');
-    if (mode === 'year') renderYearList();
-    if (mode === 'month') renderMonthList();
-  }
-
-  function openDatePicker() {
-    closeAllModals();
-    initDatePicker();
-
-    var cur = $('#date').value || todayStr();
-    var parts = cur.split('-');
-    if (parts.length === 3) {
-      dpYear = parseInt(parts[0], 10) || new Date().getFullYear();
-      dpMonth = (parseInt(parts[1], 10) || 1) - 1;
-      dpDay = parseInt(parts[2], 10) || 1;
-    }
-    dpViewYear = dpYear;
-    dpViewMonth = dpMonth;
-
-    switchDateMode('calendar');
-    updateDateDisplay();
-    renderCalendar();
-    document.getElementById('dateModal').hidden = false;
-  }
-
-  function updateDateDisplay() {
-    document.getElementById('yearBtn').textContent = dpYear;
-    document.getElementById('monthBtn').textContent = p2(dpMonth + 1);
-    document.getElementById('dayBtn').textContent = p2(dpDay);
-  }
-
-  function confirmDate() {
-    setDateValue(dpYear + '-' + p2(dpMonth + 1) + '-' + p2(dpDay));
-    document.getElementById('dateModal').hidden = true;
-  }
-
-  function setDateValue(str) {
-    $('#date').value = str || '';
-    $('#dateFieldText').textContent = str || '选择日期';
-  }
-
-  function renderCalendar() {
-    var y = dpViewYear, m = dpViewMonth;
-    var first = new Date(y, m, 1);
-    var startWeekday = first.getDay();
-    var daysInMonth = new Date(y, m + 1, 0).getDate();
-    var prevMonthDays = new Date(y, m, 0).getDate();
-
-    document.getElementById('calendarTitle').textContent = y + '年' + (m + 1) + '月';
-
-    var html = '';
-    var today = new Date();
-    var todayY = today.getFullYear(), todayM = today.getMonth(), todayD = today.getDate();
-
-    for (var i = startWeekday - 1; i >= 0; i--) {
-      var d = prevMonthDays - i;
-      html += '<button type="button" class="calendar-day other" data-day="' + d +
-        '" data-month="' + (m - 1) + '" data-year="' + y + '">' + d + '</button>';
-    }
-
-    for (var d2 = 1; d2 <= daysInMonth; d2++) {
-      var cls = 'calendar-day';
-      if (y === todayY && m === todayM && d2 === todayD) cls += ' today';
-      if (y === dpYear && m === dpMonth && d2 === dpDay) cls += ' selected';
-      html += '<button type="button" class="' + cls + '" data-day="' + d2 +
-        '" data-month="' + m + '" data-year="' + y + '">' + d2 + '</button>';
-    }
-
-    var total = startWeekday + daysInMonth;
-    var rows = Math.ceil(total / 7);
-    var remain = rows * 7 - total;
-    for (var d3 = 1; d3 <= remain; d3++) {
-      html += '<button type="button" class="calendar-day other" data-day="' + d3 +
-        '" data-month="' + (m + 1) + '" data-year="' + y + '">' + d3 + '</button>';
-    }
-
-    var grid = document.getElementById('calendarGrid');
-    grid.innerHTML = html;
-    grid.onclick = function (e) {
-      var btn = e.target.closest('button[data-day]');
-      if (!btn) return;
-      var dt = new Date(
-        parseInt(btn.getAttribute('data-year'), 10),
-        parseInt(btn.getAttribute('data-month'), 10),
-        parseInt(btn.getAttribute('data-day'), 10)
-      );
-      dpYear = dt.getFullYear();
-      dpMonth = dt.getMonth();
-      dpDay = dt.getDate();
-      dpViewYear = dpYear;
-      dpViewMonth = dpMonth;
-      updateDateDisplay();
-      renderCalendar();
-    };
-  }
-
-  function renderYearList() {
-    var startY = Math.max(1900, dpYear - 60);
-    var endY = Math.min(2200, dpYear + 40);
-    var html = '';
-    for (var y = startY; y <= endY; y++) {
-      var cls = 'year-item' + (y === dpYear ? ' selected' : '');
-      html += '<button type="button" class="' + cls + '" data-year="' + y + '">' + y + '</button>';
-    }
-    var el = document.getElementById('yearList');
-    el.innerHTML = html;
-    el.onclick = function (e) {
-      var btn = e.target.closest('button[data-year]');
-      if (!btn) return;
-      dpYear = parseInt(btn.getAttribute('data-year'), 10);
-      var maxDay = new Date(dpYear, dpMonth + 1, 0).getDate();
-      if (dpDay > maxDay) dpDay = maxDay;
-      dpViewYear = dpYear;
-      updateDateDisplay();
-      switchDateMode('calendar');
-      renderCalendar();
-    };
-    requestAnimationFrame(function () {
-      var sel = el.querySelector('.year-item.selected');
-      if (sel) el.scrollTop = Math.max(0, sel.offsetTop - el.clientHeight / 2 + sel.offsetHeight / 2);
-    });
-  }
-
-  function renderMonthList() {
-    var html = '';
-    for (var m = 0; m < 12; m++) {
-      var cls = 'month-item' + (m === dpMonth ? ' selected' : '');
-      html += '<button type="button" class="' + cls + '" data-month="' + m + '">' + (m + 1) + ' 月</button>';
-    }
-    var el = document.getElementById('monthList');
-    el.innerHTML = html;
-    el.onclick = function (e) {
-      var btn = e.target.closest('button[data-month]');
-      if (!btn) return;
-      dpMonth = parseInt(btn.getAttribute('data-month'), 10);
-      var maxDay = new Date(dpYear, dpMonth + 1, 0).getDate();
-      if (dpDay > maxDay) dpDay = maxDay;
-      dpViewMonth = dpMonth;
-      updateDateDisplay();
-      switchDateMode('calendar');
-      renderCalendar();
-    };
   }
 
   /* ---------- IndexedDB ---------- */
@@ -2443,6 +1868,312 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     }
   }
 
+  /* ==========================================================
+     自定义日期 / 时间选择器
+     ========================================================== */
+
+  function closeAllModals() {
+    document.getElementById('timeModal').hidden = true;
+    document.getElementById('dateModal').hidden = true;
+  }
+
+  // ---------- 时间选择器 ----------
+
+  function buildWheel(el, count, padLeft) {
+    var html = '';
+    for (var i = 0; i < count; i++) {
+      var label = padLeft ? String(i).padStart(2, '0') : String(i);
+      html += '<div class="wheel-item">' + label + '</div>';
+    }
+    el.innerHTML = html;
+  }
+
+  function wheelIndex(el) {
+    return clamp(Math.round(el.scrollTop / WHEEL_ITEM_H), 0, Math.floor((el.children.length) - 1));
+  }
+
+  function initTimeWheels() {
+    var hourWheel = document.getElementById('hourWheel');
+    var minuteWheel = document.getElementById('minuteWheel');
+    if (hourWheel.children.length) return; // 已初始化
+
+    buildWheel(hourWheel, 24, true);
+    buildWheel(minuteWheel, 60, true);
+
+    var updateHour = function () {
+      var idx = wheelIndex(hourWheel);
+      document.getElementById('pickerHourDisplay').textContent = p2(idx);
+    };
+    var updateMinute = function () {
+      var idx = wheelIndex(minuteWheel);
+      document.getElementById('pickerMinuteDisplay').textContent = p2(idx);
+    };
+
+    var tick;
+    function onScroll(fn) {
+      return function () {
+        cancelAnimationFrame(tick);
+        tick = requestAnimationFrame(fn);
+      };
+    }
+
+    hourWheel.addEventListener('scroll', onScroll(updateHour), { passive: true });
+    minuteWheel.addEventListener('scroll', onScroll(updateMinute), { passive: true });
+  }
+
+  function openTimePicker() {
+    closeAllModals();
+    initTimeWheels();
+
+    var current = $('#time').value || nowTime();
+    var parts = current.split(':');
+    var hour = parseInt(parts[0], 10) || 0;
+    var minute = parseInt(parts[1], 10) || 0;
+    hour = clamp(hour, 0, 23);
+    minute = clamp(minute, 0, 59);
+
+    document.getElementById('pickerHourDisplay').textContent = p2(hour);
+    document.getElementById('pickerMinuteDisplay').textContent = p2(minute);
+
+    document.getElementById('timeModal').hidden = false;
+
+    // 等一帧再滚动，确保 DOM 已有尺寸
+    requestAnimationFrame(function () {
+      document.getElementById('hourWheel').scrollTop = hour * WHEEL_ITEM_H;
+      document.getElementById('minuteWheel').scrollTop = minute * WHEEL_ITEM_H;
+    });
+  }
+
+  function confirmTime() {
+    var hour = parseInt(document.getElementById('pickerHourDisplay').textContent, 10) || 0;
+    var minute = parseInt(document.getElementById('pickerMinuteDisplay').textContent, 10) || 0;
+    var str = p2(hour) + ':' + p2(minute);
+    setTimeValue(str);
+    document.getElementById('timeModal').hidden = true;
+  }
+
+  function setTimeValue(str) {
+    $('#time').value = str || '';
+    $('#timeFieldText').textContent = str || '选择时间';
+  }
+
+  // ---------- 日期选择器 ----------
+
+  function initDatePicker() {
+    // 首次打开时初始化
+    var today = new Date();
+    dpYear = today.getFullYear();
+    dpMonth = today.getMonth();
+    dpDay = today.getDate();
+    dpViewYear = dpYear;
+    dpViewMonth = dpMonth;
+
+    // 点击年月日
+    document.getElementById('yearBtn').addEventListener('click', function () {
+      switchDateMode('year');
+    });
+    document.getElementById('monthBtn').addEventListener('click', function () {
+      switchDateMode('month');
+    });
+    document.getElementById('dayBtn').addEventListener('click', function () {
+      switchDateMode('calendar');
+    });
+
+    // 左右切换月份
+    document.getElementById('prevMonthBtn').addEventListener('click', function () {
+      dpViewMonth--;
+      if (dpViewMonth < 0) { dpViewMonth = 11; dpViewYear--; }
+      renderCalendar();
+    });
+    document.getElementById('nextMonthBtn').addEventListener('click', function () {
+      dpViewMonth++;
+      if (dpViewMonth > 11) { dpViewMonth = 0; dpViewYear++; }
+      renderCalendar();
+    });
+
+    // 底部按钮
+    document.getElementById('dateTodayBtn').addEventListener('click', function () {
+      var t = new Date();
+      dpYear = t.getFullYear();
+      dpMonth = t.getMonth();
+      dpDay = t.getDate();
+      dpViewYear = dpYear;
+      dpViewMonth = dpMonth;
+      updateDateDisplay();
+      renderCalendar();
+    });
+    document.getElementById('dateConfirmBtn').addEventListener('click', function () {
+      confirmDate();
+    });
+  }
+
+  function switchDateMode(mode) {
+    dpMode = mode;
+    document.getElementById('calendarView').hidden = (mode !== 'calendar');
+    document.getElementById('yearListView').hidden = (mode !== 'year');
+    document.getElementById('monthListView').hidden = (mode !== 'month');
+    if (mode === 'year') renderYearList();
+    if (mode === 'month') renderMonthList();
+  }
+
+  function openDatePicker() {
+    closeAllModals();
+
+    if (!dpYear) initDatePicker();
+
+    // 从当前字段值初始化
+    var cur = $('#date').value || todayStr();
+    var parts = cur.split('-');
+    if (parts.length === 3) {
+      dpYear = parseInt(parts[0], 10) || new Date().getFullYear();
+      dpMonth = (parseInt(parts[1], 10) || 1) - 1;
+      dpDay = parseInt(parts[2], 10) || 1;
+    }
+    dpViewYear = dpYear;
+    dpViewMonth = dpMonth;
+
+    dpMode = 'calendar';
+    switchDateMode('calendar');
+
+    updateDateDisplay();
+    renderCalendar();
+
+    document.getElementById('dateModal').hidden = false;
+  }
+
+  function updateDateDisplay() {
+    document.getElementById('yearBtn').textContent = dpYear;
+    document.getElementById('monthBtn').textContent = p2(dpMonth + 1);
+    document.getElementById('dayBtn').textContent = p2(dpDay);
+  }
+
+  function confirmDate() {
+    var str = dpYear + '-' + p2(dpMonth + 1) + '-' + p2(dpDay);
+    setDateValue(str);
+    document.getElementById('dateModal').hidden = true;
+  }
+
+  function setDateValue(str) {
+    $('#date').value = str || '';
+    $('#dateFieldText').textContent = str || '选择日期';
+  }
+
+  function renderCalendar() {
+    var y = dpViewYear, m = dpViewMonth;
+    var first = new Date(y, m, 1);
+    var startWeekday = first.getDay(); // 0=周日
+    var daysInMonth = new Date(y, m + 1, 0).getDate();
+    var prevMonthDays = new Date(y, m, 0).getDate();
+
+    document.getElementById('calendarTitle').textContent = y + '年' + (m + 1) + '月';
+
+    var html = '';
+    var today = new Date();
+    var todayY = today.getFullYear(), todayM = today.getMonth(), todayD = today.getDate();
+
+    // 上月末尾
+    for (var i = startWeekday - 1; i >= 0; i--) {
+      var d = prevMonthDays - i;
+      html += '<button type="button" class="calendar-day other" data-day="' + d +
+        '" data-month="' + (m - 1) + '" data-year="' + y + '">' + d + '</button>';
+    }
+
+    // 本月
+    for (var d2 = 1; d2 <= daysInMonth; d2++) {
+      var cls = 'calendar-day';
+      if (y === todayY && m === todayM && d2 === todayD) cls += ' today';
+      if (y === dpYear && m === dpMonth && d2 === dpDay) cls += ' selected';
+      html += '<button type="button" class="' + cls + '" data-day="' + d2 +
+        '" data-month="' + m + '" data-year="' + y + '">' + d2 + '</button>';
+    }
+
+    // 下月开头，补齐到 6 行
+    var total = startWeekday + daysInMonth;
+    var rows = Math.ceil(total / 7);
+    var remain = rows * 7 - total;
+    for (var d3 = 1; d3 <= remain; d3++) {
+      html += '<button type="button" class="calendar-day other" data-day="' + d3 +
+        '" data-month="' + (m + 1) + '" data-year="' + y + '">' + d3 + '</button>';
+    }
+
+    var grid = document.getElementById('calendarGrid');
+    grid.innerHTML = html;
+
+    // 事件委托
+    grid.onclick = function (e) {
+      var btn = e.target.closest('button[data-day]');
+      if (!btn) return;
+      var day = parseInt(btn.getAttribute('data-day'), 10);
+      var month = parseInt(btn.getAttribute('data-month'), 10);
+      var year = parseInt(btn.getAttribute('data-year'), 10);
+
+      // 处理跨月
+      var dt = new Date(year, month, day);
+      year = dt.getFullYear();
+      month = dt.getMonth();
+      day = dt.getDate();
+
+      dpYear = year;
+      dpMonth = month;
+      dpDay = day;
+      dpViewYear = year;
+      dpViewMonth = month;
+
+      updateDateDisplay();
+      renderCalendar();
+    };
+  }
+
+  function renderYearList() {
+    var startY = Math.max(1900, dpYear - 60);
+    var endY = Math.min(2200, dpYear + 40);
+    var html = '';
+    for (var y = startY; y <= endY; y++) {
+      var cls = 'year-item' + (y === dpYear ? ' selected' : '');
+      html += '<button type="button" class="' + cls + '" data-year="' + y + '">' + y + '</button>';
+    }
+    var el = document.getElementById('yearList');
+    el.innerHTML = html;
+    el.onclick = function (e) {
+      var btn = e.target.closest('button[data-year]');
+      if (!btn) return;
+      dpYear = parseInt(btn.getAttribute('data-year'), 10);
+      if (dpMonth === 1 && dpDay > 28) dpDay = 28; // 简单保护
+      dpViewYear = dpYear;
+      updateDateDisplay();
+      switchDateMode('calendar');
+      renderCalendar();
+    };
+
+    // 滚动到选中年
+    requestAnimationFrame(function () {
+      var sel = el.querySelector('.year-item.selected');
+      if (sel) el.scrollTop = Math.max(0, sel.offsetTop - el.clientHeight / 2 + sel.offsetHeight / 2);
+    });
+  }
+
+  function renderMonthList() {
+    var html = '';
+    for (var m = 0; m < 12; m++) {
+      var cls = 'month-item' + (m === dpMonth ? ' selected' : '');
+      html += '<button type="button" class="' + cls + '" data-month="' + m + '">' + (m + 1) + ' 月</button>';
+    }
+    var el = document.getElementById('monthList');
+    el.innerHTML = html;
+    el.onclick = function (e) {
+      var btn = e.target.closest('button[data-month]');
+      if (!btn) return;
+      dpMonth = parseInt(btn.getAttribute('data-month'), 10);
+      // 月末保护
+      var maxDay = new Date(dpYear, dpMonth + 1, 0).getDate();
+      if (dpDay > maxDay) dpDay = maxDay;
+      dpViewMonth = dpMonth;
+      updateDateDisplay();
+      switchDateMode('calendar');
+      renderCalendar();
+    };
+  }
+
   /* ---------- 表单 ---------- */
 
   function showPreview(blob, name) {
@@ -2564,6 +2295,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       $('#uric').value = '';
       $('#note').value = '';
       renderAll();
+      $('#glucose').focus();
     } catch (err) {
       alert('保存失败：' + err.message);
     } finally {
@@ -2586,7 +2318,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     $('#note').value = r.note || '';
     $('#formTitle').textContent = '修改记录';
     $('#submitBtn').textContent = '保存修改';
-    $('#entryActions').hidden = false;
+    $('#cancelEdit').hidden = false;
 
     if (r.imageId) {
       idbGet(r.imageId).then(function (v) {
@@ -2595,14 +2327,16 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     }
 
     showView('entry');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(function () {
+      document.getElementById('recordForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
   }
 
   function cancelEdit() {
     editingId = null;
     $('#formTitle').textContent = '记一次';
     $('#submitBtn').textContent = '保存';
-    $('#entryActions').hidden = true;
+    $('#cancelEdit').hidden = true;
     $('#glucose').value = '';
     $('#uric').value = '';
     $('#note').value = '';
@@ -2714,16 +2448,23 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   }
 
   function safeDecodeURI(s) {
-    try { return decodeURIComponent(s); } catch (e) { return s; }
+    try {
+      return decodeURIComponent(s);
+    } catch (e) {
+      return s;
+    }
   }
 
   function normalizeBase64Url(s) {
     var raw = String(s || '').replace(/\s/g, '');
+    // 微信等可能对 hash 做过 URL 编码，先解码
     var decoded = safeDecodeURI(raw);
+    // 双重编码的情况再解一次
     if (decoded.indexOf('%') >= 0) {
       var again = safeDecodeURI(decoded);
       if (again !== decoded) decoded = again;
     }
+    // 还原成标准 base64
     return decoded.replace(/-/g, '+').replace(/_/g, '/');
   }
 
@@ -2783,17 +2524,20 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   function checkShareHash() {
     var encoded = null;
 
+    // 1) 标准 hash：#share=xxx
     var hash = location.hash || '';
     if (hash.indexOf('#share=') === 0) {
       encoded = hash.slice(7);
     }
 
+    // 2) query 方式：?share=xxx（微信下更可靠）
     if (!encoded) {
       var search = location.search || '';
       var m = search.match(/[?&]share=([^&]+)/);
       if (m) encoded = m[1];
     }
 
+    // 3) 兜底：hash 里任意位置出现 share=
     if (!encoded) {
       var idx = hash.indexOf('share=');
       if (idx >= 0) {
@@ -3354,17 +3098,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       rt = setTimeout(function () { hideTip(); drawChart(); }, 160);
     });
 
-    var stickyTop = document.getElementById('stickyTop');
-    function onScroll() {
-      if (!stickyTop) return;
-      if (window.scrollY > 4) stickyTop.classList.add('is-scrolled');
-      else stickyTop.classList.remove('is-scrolled');
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
     initChartEvents();
-    initNumPad();
     initPWA();
 
     if (isShare) {
