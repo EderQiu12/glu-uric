@@ -86,7 +86,6 @@ body.share-mode .nav-data{display:none}
 
 .topbar{padding:16px 4px 10px}
 .topbar h1{margin:0;font-size:20px;letter-spacing:.3px}
-/* 顶部副标题点击区域 */
 .topbar p{
   margin:4px 0 0; font-size:13px; color:var(--muted);
   display:inline-flex; align-items:center; gap:6px; cursor:pointer;
@@ -502,7 +501,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
       <!-- 点击副标题显示版本号 -->
       <p id="versionTrigger">
         <span>数据只保存在本机，离线也能用</span>
-        <span class="version-badge" id="versionBadge" hidden>v10</span>
+        <span class="version-badge" id="versionBadge" hidden>v11</span>
       </p>
     </header>
     <div class="action-bar" id="entryActions" hidden>
@@ -827,6 +826,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   'use strict';
 
   var KEY = 'glu_uric_records_v1';
+  var DRAFT_KEY = 'glu_uric_draft_v1';
   var OWNER_KEY = 'glu_uric_owner_v1';
   var records = [];
   var editingId = null;
@@ -943,6 +943,57 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   }
   function setOwnerName(name) {
     try { localStorage.setItem(OWNER_KEY, name); } catch (e) {}
+  }
+
+  /* ---------- 草稿暂存逻辑 ---------- */
+  function saveDraft() {
+    if (shareMode || editingId) return;
+    var g = $('#glucose').value.trim();
+    var u = $('#uric').value.trim();
+    var n = $('#note').value.trim();
+    
+    // 如果全为空，清除草稿
+    if (!g && !u && !n) {
+      localStorage.removeItem(DRAFT_KEY);
+      return;
+    }
+    
+    var draft = {
+      date: $('#date').value,
+      time: $('#time').value,
+      glucose: g,
+      uric: u,
+      gtype: $('#gtype').value,
+      note: n
+    };
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch(e) {}
+  }
+
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+  }
+
+  function restoreDraft() {
+    try {
+      var raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (!d || (!d.glucose && !d.uric && !d.note)) return;
+
+      setDateValue(d.date || todayStr());
+      setTimeValue(d.time || nowTime());
+      $('#glucose').value = d.glucose || '';
+      $('#uric').value = d.uric || '';
+      $('#gtype').value = d.gtype || '空腹';
+      $('#note').value = d.note || '';
+      
+      // 延迟弹提示
+      setTimeout(function() {
+        toast('已恢复上次未保存的内容');
+      }, 600);
+    } catch(e) {}
   }
 
   /* ---------- 数字键盘 ---------- */
@@ -1079,6 +1130,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     if (v === '' || v === '.') {
       $('#' + numPadTarget).value = '';
       closeNumPad();
+      saveDraft(); // 预记录
       return;
     }
     var n = parseFloat(v);
@@ -1088,6 +1140,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     }
     $('#' + numPadTarget).value = v;
     closeNumPad();
+    saveDraft(); // 预记录
   }
 
   function initNumPad() {
@@ -1201,6 +1254,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     var minute = parseInt(document.getElementById('pickerMinuteDisplay').textContent, 10) || 0;
     setTimeValue(p2(hour) + ':' + p2(minute));
     document.getElementById('timeModal').hidden = true;
+    saveDraft();
   }
 
   function setTimeValue(str) {
@@ -1287,6 +1341,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
   function confirmDate() {
     setDateValue(dpYear + '-' + p2(dpMonth + 1) + '-' + p2(dpDay));
     document.getElementById('dateModal').hidden = true;
+    saveDraft();
   }
 
   function setDateValue(str) {
@@ -2463,7 +2518,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
         editingId = null;
         $('#formTitle').textContent = '记一次';
         $('#submitBtn').textContent = '保存';
-        $('#cancelEdit').hidden = true;
+        $('#entryActions').hidden = true;
         toast('已保存修改');
       } else {
         records.push({
@@ -2477,6 +2532,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
 
       persist();
       resetImageState();
+      clearDraft(); // 保存成功，清除草稿
       $('#glucose').value = '';
       $('#uric').value = '';
       $('#note').value = '';
@@ -2494,6 +2550,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     if (!r) return;
     editingId = id;
     resetImageState();
+    clearDraft(); // 编辑旧记录时，清除新记录草稿
 
     setDateValue(r.date);
     setTimeValue(r.time || '00:00');
@@ -2524,6 +2581,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     $('#uric').value = '';
     $('#note').value = '';
     resetImageState();
+    clearDraft();
   }
 
   /* ---------- 导出 ---------- */
@@ -3064,6 +3122,11 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     // 初始化日期/时间
     setDateValue(todayStr());
     setTimeValue(nowTime());
+    
+    // 如果不在分享模式，尝试恢复草稿
+    if (!isShare) {
+      restoreDraft();
+    }
 
     var ownerInput = $('#ownerName');
     if (ownerInput) ownerInput.value = getOwnerName();
@@ -3117,12 +3180,23 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     document.getElementById('timeNowBtn').addEventListener('click', function () {
       setTimeValue(nowTime());
       document.getElementById('timeModal').hidden = true;
+      saveDraft();
     });
 
     // 日期弹窗底部按钮
     document.getElementById('dateConfirmBtn').addEventListener('click', confirmDate);
     // 日期弹窗初始化
     initDatePicker();
+
+    // 备注失焦时预记录
+    $('#note').addEventListener('blur', function () {
+      saveDraft();
+    });
+    
+    // 测量时段改变时预记录
+    $('#gtype').addEventListener('change', function () {
+      saveDraft();
+    });
 
     // 我的名字
     var saveOwnerBtn = $('#saveOwnerName');
@@ -3308,6 +3382,11 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:pan-y}
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
+
+    // 页面卸载前，也记录一次草稿（以防关闭页面丢失）
+    window.addEventListener('beforeunload', function () {
+      saveDraft();
+    });
 
     initChartEvents();
     initNumPad();
