@@ -1,5 +1,5 @@
 /* 血糖 ·/* 每次改 index.html / manifest.json / icon.svg 后，把下面版本号 +1 */ 尿酸 记录本 Service Worker */
-consT cACHE = 'glu-uric-v7:waitUntil';
+consT cACHE = 'glu-uric-v9:waitUntil';
 const ASSETS = [
   './',
   './index.html',
